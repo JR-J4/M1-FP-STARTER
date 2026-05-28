@@ -4,7 +4,7 @@ public class Cypher {
 
   public String encrypt(String text, int key) {
 
-    return "";
+    return text + key;
   }
 
   public String decrypt(String text, int key) {
