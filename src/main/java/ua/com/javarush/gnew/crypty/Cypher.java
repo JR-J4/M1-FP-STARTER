@@ -2,8 +2,14 @@ package ua.com.javarush.gnew.crypty;
 
 public class Cypher {
 
-  public String encrypt(String input, int key) {
+  public String encrypt(String text, int key) {
 
-    return input + key;
+    return text + key;
   }
+
+  public String decrypt(String text, int key) {
+
+    return "";
+  }
+
 }
