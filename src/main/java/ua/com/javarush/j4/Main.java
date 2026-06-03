@@ -1,5 +1,8 @@
 package ua.com.javarush.j4;
 
+import ua.com.javarush.j4.runner.ArgumentParser;
+import ua.com.javarush.j4.runner.Command;
+
 /**
  * Точка входу криптоаналізатора шифру Цезаря.
  *
@@ -8,6 +11,21 @@ package ua.com.javarush.j4;
  */
 public class Main {
     public static void main(String[] args) {
+        ArgumentParser parser = new ArgumentParser();
+
+        Command command = Command.fromFlag("-e");
+
+        for (String arg : args) {
+            System.out.println(Command.fromFlag(arg));
+
+        }
+
+
+
+//        for (String arg : args) {
+//            System.out.println(arg);
+//
+//        }
         // TODO: реалізуй CLI шифру Цезаря. Дивись MainTest.
     }
 }
