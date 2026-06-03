@@ -2,8 +2,6 @@ package ua.com.javarush.j4;
 
 import java.io.FileReader;
 import java.io.IOException;
-
-
 /**
  * Точка входу криптоаналізатора шифру Цезаря.
  *
