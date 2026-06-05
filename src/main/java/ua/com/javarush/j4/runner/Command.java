@@ -22,6 +22,6 @@ public enum Command {
                 return command;
             }
         }
-        throw new IllegalArgumentException("Невідома команда: " + flag) ;
+        return  null;
     }
 }
