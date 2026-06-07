@@ -40,7 +40,7 @@ public class Main {
 
             // Далі намагаюся перехопити все, що не врахувала
         } catch (Exception e) {
-            System.err.println("Сталася критична помилка програми: " + e.getMessage());
+            System.err.println("Сталася критична помилка програми : " + e.getMessage());
             e.printStackTrace();
         }
     }
