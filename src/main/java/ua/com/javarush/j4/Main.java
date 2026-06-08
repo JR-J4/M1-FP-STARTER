@@ -1,5 +1,7 @@
 package ua.com.javarush.j4;
 
+import ua.com.javarush.j4.controller.MainController;
+
 /**
  * Точка входу криптоаналізатора шифру Цезаря.
  *
@@ -8,6 +10,7 @@ package ua.com.javarush.j4;
  */
 public class Main {
     public static void main(String[] args) {
-        // TODO: реалізуй CLI шифру Цезаря. Дивись MainTest.
+        MainController mainController = new MainController();
+        mainController.start(args);
     }
 }
