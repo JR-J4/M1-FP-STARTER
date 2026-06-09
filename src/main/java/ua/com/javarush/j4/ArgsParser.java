@@ -4,7 +4,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class ArgsParser {
-    public static RunOptions parese(String[] args) {
+    public static RunOptions parse(String[] args) {
         Command command = null;
         int key = 0;
         Path path = null;

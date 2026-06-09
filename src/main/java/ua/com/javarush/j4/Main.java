@@ -1,7 +1,11 @@
 package ua.com.javarush.j4;
 
-import java.io.FileReader;
+
 import java.io.IOException;
+import java.nio.file.Path;
+import java.util.ArrayList;
+
+
 /**
  * Точка входу криптоаналізатора шифру Цезаря.
  *
@@ -12,27 +16,44 @@ import java.io.IOException;
 public class Main {
     public static void main(String[] args) throws IOException {
         // TODO: реалізуй CLI шифру Цезаря. Дивись MainTest.
-        int kay = 1;
-
-        FileReader file = new FileReader("C:\\Users\\user\\IdeaProjects\\M1-FP-Mykhailo\\src\\main\\resources\\input.txt");
-        String text = file.readAllAsString();
-        String text2 = "АААААВВВВ";
-//          ArrayList<Character> englishAlphabet = new ArrayList<>(List.of(
-//                'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-//                'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-//                'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-//                'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-//                '.', ',', '«', '»', '"', '\'', ':', '!', '?'
-//        ));
-          Cipher cipher = new Cipher();
-
-        System.out.println(cipher.encrypt(text2, kay,Alphabet.getLanguishes(text2)));
-        String newText = cipher.encrypt(text2, kay, Alphabet.UKR.getAlphabet());
-        System.out.println(cipher.decrypt(newText, kay, Alphabet.UKR.getAlphabet()));
+        Cipher cipher = new Cipher();
+        String[] s = {
+                "-e", "-k","1", "-f",
+                "C:\\Users\\user\\IdeaProjects\\M1-FP-Mykhailo\\src\\main\\resources\\input.txt"
+        };
 
 
+        try {
+            RunOptions options = ArgsParser.parse(args);
+            String text = FileService.read(options.path());
+             ArrayList<Character> Languishes =  Alphabet.getLanguishes(text);
+             switch (options.command()){
+                 case ENCRYPT-> {
+                     Path newPath = generateNewPath(options.path(),"[ENCRYPTED]");
+                     String encrypted = cipher.encrypt(text, options.key(),  Languishes);
+                     FileService.write(newPath,encrypted);
+                 }
+                 case DECRYPT->{
+                     Path newPath = generateNewPath(options.path(),"[DECRYPTED]");
+                     String encrypted = cipher.decrypt(text, options.key(), Languishes);
+                     FileService.write(newPath,encrypted);
 
+                 }
+                 case BRUTE_FORCE -> System.out.println(options.command());
+             }
+        }catch (Exception e){
+            System.err.println("Помилка: " + e.getMessage());
+        }
 
-
+    }
+    private static Path generateNewPath(Path originalPath, String suffix) {
+        String name = originalPath.getFileName().toString();
+        if (name.contains("[ENCRYPTED]") && suffix.equals("[DECRYPTED]")) {
+            String newName = name.replace("[ENCRYPTED]", "[DECRYPTED]");
+            return originalPath.resolveSibling(newName);
+        }
+        int dotIndex = name.lastIndexOf(".");
+        String newName = name.substring(0, dotIndex)+suffix+name.substring(dotIndex);
+        return originalPath.resolveSibling(newName);
     }
 }
