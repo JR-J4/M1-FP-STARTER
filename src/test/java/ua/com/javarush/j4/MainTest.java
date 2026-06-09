@@ -36,7 +36,7 @@ class MainTest {
     private static final String BF_COMMAND = "-bf";
 
     private static final String HAMLET_EN = loadResource("hamlet.txt");
-    private static final String ORWELL_UA = loadResource("orwell.txt");
+    private static final String ORWELL_UA = loadResource("orwell-UA.txt");
 
     private static String loadResource(String resourceName) {
         try (var in = MainTest.class.getResourceAsStream("/" + resourceName)) {

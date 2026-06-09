@@ -1,0 +1,9 @@
+-e -k 5 -f src/test/resources/hamlet.txt
+- FOR ENCRYPTION
+
+
+-d -k 5 -f "src/test/resources/hamlet [ENCRYPTED].txt"
+- FOR DECRYPTION
+
+-bf -f "src/test/resources/orwell [ENCRYPTED].txt"
+- FOR BRUTE FORCE
