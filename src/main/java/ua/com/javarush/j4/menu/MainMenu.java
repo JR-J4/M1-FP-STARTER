@@ -1,6 +1,7 @@
 package ua.com.javarush.j4.menu;
 
 import ua.com.javarush.j4.alphabet.Alphabet;
+import ua.com.javarush.j4.args.ArgsParser;
 import ua.com.javarush.j4.args.RunOptions;
 import ua.com.javarush.j4.cipher.BruteForce;
 import ua.com.javarush.j4.cipher.Cipher;
@@ -10,9 +11,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 
 public class MainMenu {
-    public static void manu(RunOptions options) {
+    public void start(String[] args) {
 
         try {
+            RunOptions options = ArgsParser.parse(args);
             String text = FileService.read(options.path());
             ArrayList<Character> languishes = Alphabet.getLanguage(text);
             Cipher cipher = new Cipher();

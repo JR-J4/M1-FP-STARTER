@@ -15,12 +15,8 @@ import ua.com.javarush.j4.menu.MainMenu;
 public class Main {
     public static void main(String[] args) {
         // TODO: реалізуй CLI шифру Цезаря. Дивись MainTest.
-       try {
-           RunOptions options = ArgsParser.parse(args);
-           MainMenu.manu(options);
-       } catch (Exception e) {
-           System.err.println("Помилка: " + e.getMessage());
-       }
+      MainMenu mainMenu = new MainMenu();
+      mainMenu.start(args);
     }
 
 }
