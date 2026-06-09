@@ -1,4 +1,4 @@
-package ua.com.javarush.j4;
+package ua.com.javarush.j4.menu;
 
 public enum Command {
     ENCRYPT("-e"),
@@ -18,6 +18,6 @@ public enum Command {
                 return command;
             }
         }
-        throw new IllegalArgumentException("невідома команда");
+        throw new IllegalArgumentException("Невідома команда");
     }
 }

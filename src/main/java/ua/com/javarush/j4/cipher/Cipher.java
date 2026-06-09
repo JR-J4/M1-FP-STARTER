@@ -1,4 +1,4 @@
-package ua.com.javarush.j4;
+package ua.com.javarush.j4.cipher;
 
 import java.util.ArrayList;
 import java.util.Collections;

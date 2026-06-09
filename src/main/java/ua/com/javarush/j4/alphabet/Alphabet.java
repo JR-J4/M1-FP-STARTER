@@ -1,4 +1,4 @@
-package ua.com.javarush.j4;
+package ua.com.javarush.j4.alphabet;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +20,7 @@ public enum Alphabet {
         return new ArrayList<>(this.characters);
     }
 
-    public static ArrayList<Character> getLanguishes(String text){
+    public static ArrayList<Character> getLanguage(String text){
         char[] chars = text.toCharArray();
         int en = 0,ukr = 0;
         for (char c : chars) {

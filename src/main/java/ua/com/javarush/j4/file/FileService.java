@@ -1,4 +1,4 @@
-package ua.com.javarush.j4;
+package ua.com.javarush.j4.file;
 
 import java.io.IOException;
 import java.nio.file.Files;

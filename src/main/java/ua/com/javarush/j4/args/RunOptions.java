@@ -1,4 +1,6 @@
-package ua.com.javarush.j4;
+package ua.com.javarush.j4.args;
+
+import ua.com.javarush.j4.menu.Command;
 
 import java.nio.file.Path;
 

@@ -1,4 +1,6 @@
-package ua.com.javarush.j4;
+package ua.com.javarush.j4.cipher;
+
+import ua.com.javarush.j4.alphabet.Alphabet;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -6,7 +8,7 @@ import java.util.HashMap;
 public class BruteForce {
 
     public int findKey(String input) {
-        ArrayList<Character> languishes = Alphabet.getLanguishes(input);
+        ArrayList<Character> languishes = Alphabet.getLanguage(input);
         HashMap<Character, Integer> mapLetters = getFrequencies(languishes, input);
         char mostFrequentLetter = 'e';
         if (languishes.contains('о') || languishes.contains('О')) mostFrequentLetter = 'о';
