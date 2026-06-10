@@ -9,10 +9,18 @@ import ua.com.javarush.j4.file.FileService;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Scanner;
 
 public class MainMenu {
     public void start(String[] args) {
+    if(args.length > 0){
+        startTerminal(args);
+    }else {
+        startScanner();
+    }
 
+    }
+    public void startTerminal(String[] args){
         try {
             RunOptions options = ArgsParser.parse(args);
             String text = FileService.read(options.path());
@@ -41,6 +49,31 @@ public class MainMenu {
         } catch (Exception e) {
             System.out.println("Помилка: " + e.getMessage());
         }
+    }
+    public void startScanner(){
+
+        Scanner scanner = new Scanner(System.in);
+
+        String inputline;
+
+        do {
+            System.out.println("Введіть команду (-e -k n -f \"шлях до файлу\"):");
+            System.out.println("Або 'exit' для виходу>");
+            System.out.print(">:");
+
+            inputline = scanner.nextLine();
+            if (inputline.equalsIgnoreCase("exit")) {
+                System.out.println("Завершення роботи");
+                break;
+            }
+            String[] inputArgs = inputline.split(" ");
+
+            try {
+                startTerminal(inputArgs);
+            }catch (Exception e) {
+                System.err.println("Помилка вводу: " + e.getMessage());
+            }
+        } while (true);
     }
 
 

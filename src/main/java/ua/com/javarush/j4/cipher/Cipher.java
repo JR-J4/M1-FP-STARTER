@@ -6,7 +6,6 @@ import java.util.Collections;
 public class Cipher  {
     public String encrypt(String text, int key, ArrayList<Character> alphabet) {
         ArrayList <Character>newAlphabet = new ArrayList<>(alphabet);
-
         Collections.rotate(newAlphabet,-key );
         char[] chars = text.toCharArray();
         return cycle(chars,alphabet,newAlphabet);

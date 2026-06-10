@@ -12,9 +12,12 @@ public class BruteForce {
         HashMap<Character, Integer> mapLetters = getFrequencies(languishes, input);
         char mostFrequentLetter = 'e';
         if (languishes.contains('о') || languishes.contains('О')) mostFrequentLetter = 'о';
-        int key = (languishes.indexOf(findMostFrequent(mapLetters)) - languishes.indexOf(mostFrequentLetter) + languishes.size()) % languishes.size();
-        return key;
+        return (languishes.indexOf(findMostFrequent(mapLetters)) -
+                languishes.indexOf(mostFrequentLetter) + languishes.size())
+                % languishes.size();
     }
+
+
     public HashMap<Character,Integer> getFrequencies(ArrayList<Character> letters , String input) {
         HashMap<Character, Integer> mapLetters = new HashMap<>();
         for (Character c : letters) {
