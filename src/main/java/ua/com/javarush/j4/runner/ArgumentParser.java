@@ -1,7 +1,6 @@
 package ua.com.javarush.j4.runner;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 public class ArgumentParser {
     public RunOptions parse(String[] args) {

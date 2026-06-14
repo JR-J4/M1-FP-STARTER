@@ -11,10 +11,6 @@ public enum Command {
         this.flag = flag;
     }
 
-    public String getFlag() {
-        return flag;
-    }
-
     public static Command fromFlag(String flag) {
         Command[] values = Command.values();
         for (Command command : values) {
