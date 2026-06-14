@@ -20,8 +20,4 @@ public enum Command {
         }
         return null;
     }
-
-    public boolean requiresKey() {
-        return this == BRUTE_FORCE;
-    }
 }

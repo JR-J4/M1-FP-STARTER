@@ -5,10 +5,18 @@ import java.util.List;
 
 public final class Alphabet {
 
-    public static final List<Character> ENGLISH = createEnglish();
-    public static final List<Character> UKRAINIAN = createUkrainian();
+    private static final List<Character> ENGLISH = createEnglish();
+    private static final List<Character> UKRAINIAN = createUkrainian();
 
     private Alphabet() {
+    }
+
+    public static List<Character> english() {
+        return ENGLISH;
+    }
+
+    public static List<Character> ukrainian() {
+        return UKRAINIAN;
     }
 
     private static List<Character> createEnglish() {
@@ -19,7 +27,6 @@ public final class Alphabet {
         for (char ch = 'a'; ch <= 'z'; ch++) {
             alphabet.add(ch);
         }
-//        addSymbols(alphabet);
         return List.copyOf(alphabet);
     }
 
@@ -29,16 +36,8 @@ public final class Alphabet {
                 "абвгґдеєжзиіїйклмнопрстуфхцчшщьюя";
 
         for (char ch : letters.toCharArray()) {
-            alphabet.add(ch);        }
-//        addSymbols(alphabet);
-        return List.copyOf(alphabet);
-    }
-
-    private static void addSymbols(List<Character> alphabet) {
-        for (char ch : new char[]{'.', ',', '\'', '"', '«', '»', ':', '!', '?', ' '}) {
             alphabet.add(ch);
         }
+        return List.copyOf(alphabet);
     }
-
-
 }

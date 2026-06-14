@@ -55,7 +55,7 @@ class MainTest {
     private Path inputFilePathEN;
 
     @BeforeEach
-    public void setUp() throws IOException {
+    void setUp() throws IOException {
         inputFilePathEN = createTestFile("EN_Text.txt", HAMLET_EN);
     }
 

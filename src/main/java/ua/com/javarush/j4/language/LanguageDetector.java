@@ -2,13 +2,17 @@ package ua.com.javarush.j4.language;
 
 import java.util.List;
 
-public class LanguageDetector {
+public final class LanguageDetector {
+
+    private LanguageDetector() {
+    }
+
     public static List<Character> detect(String text) {
 
-        int englishScore = score(text, Alphabet.ENGLISH);
-        int ukrainianScore = score(text, Alphabet.UKRAINIAN);
+        int englishScore = score(text, Alphabet.english());
+        int ukrainianScore = score(text, Alphabet.ukrainian());
 
-        return (englishScore >= ukrainianScore ? Alphabet.ENGLISH : Alphabet.UKRAINIAN);
+        return (englishScore >= ukrainianScore ? Alphabet.english() : Alphabet.ukrainian());
     }
 
     private static int score(String text, List<Character> alphabet) {

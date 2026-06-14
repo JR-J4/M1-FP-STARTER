@@ -1,4 +1,4 @@
-package ua.com.javarush.j4.fileManager;
+package ua.com.javarush.j4.filemanager;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -6,7 +6,7 @@ import java.nio.file.Path;
 
 public class FileService {
 
-    public String readFile (Path filePath) throws IOException {
+    public String readFile(Path filePath) throws IOException {
         return Files.readString(filePath);
     }
 

@@ -1,4 +1,4 @@
-package ua.com.javarush.j4.crypty;
+package ua.com.javarush.j4.crypher;
 
 import java.util.List;
 
@@ -9,6 +9,9 @@ public class Cipher {
         this.alphabet = alphabet;
     }
 
+    public int getAlphabetSize() {
+        return alphabet.size();
+    }
 
     public String encrypt(String text, int key) {
         return shift(text, key);
