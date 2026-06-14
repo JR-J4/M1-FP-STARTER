@@ -29,8 +29,7 @@ public final class Alphabet {
                 "абвгґдеєжзиіїйклмнопрстуфхцчшщьюя";
 
         for (char ch : letters.toCharArray()) {
-            alphabet.add(ch);
-        }
+            alphabet.add(ch);        }
 //        addSymbols(alphabet);
         return List.copyOf(alphabet);
     }
@@ -40,4 +39,6 @@ public final class Alphabet {
             alphabet.add(ch);
         }
     }
+
+
 }
