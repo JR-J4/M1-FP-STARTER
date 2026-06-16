@@ -584,7 +584,7 @@ class MainTest {
                 non-numeric key  | -e -k abc -f {path}
                 """)
         @DisplayName("Невалідні аргументи: програма не падає і не створює зайвих файлів")
-        void invalidArgsHandled(String scenario, String argsSpec) {
+        void  invalidArgsHandled(String scenario, String argsSpec) {
             String[] args = argsSpec.trim()
                     .replace("{path}", inputFilePathEN.toString())
                     .split("\\s+");

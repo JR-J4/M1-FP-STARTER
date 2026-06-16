@@ -8,6 +8,11 @@ package ua.com.javarush.j4;
  */
 public class Main {
     public static void main(String[] args) {
-        // TODO: реалізуй CLI шифру Цезаря. Дивись MainTest.
+        RunOptions options = ArgumentsParser.parse(args);
+        if (options != null && options.getFilePath() != null) {
+            CaesarCipher cipher = new CaesarCipher();
+            cipher.execute(options);
+
+        }
     }
 }
