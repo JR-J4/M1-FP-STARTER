@@ -46,11 +46,15 @@ public final class CryptoCli implements Callable<Integer> {
             description = "Alphabet/language: en, ua, ru, auto")
     private String alphabet;
 
+    @Option(names = {"-s", "--scorer"}, defaultValue = "dictionary",
+            description = "Brute-force fitness scorer: dictionary, frequency")
+    private String scorer;
+
     @Override
     public Integer call() throws Exception {
         Operation operation = selectedOperation();
         new CryptoService().execute(
-                new CryptoRequest(operation, file, key, cipher, keyword, alphabet));
+                new CryptoRequest(operation, file, key, cipher, keyword, alphabet, scorer));
         return 0;
     }
 

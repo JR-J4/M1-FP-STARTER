@@ -9,5 +9,6 @@ public record CryptoRequest(
         Integer key,
         String cipherName,
         String keyword,
-        String alphabetName) {
+        String alphabetName,
+        String scorerName) {
 }

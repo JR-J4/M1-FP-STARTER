@@ -37,7 +37,8 @@ public final class CryptoService {
             case ENCRYPT -> new EncryptCommand(file, cipher(request), readers, writer, naming);
             case DECRYPT -> new DecryptCommand(file, cipher(request), readers, writer, naming);
             case BRUTE_FORCE -> new BruteForceCommand(
-                    file, detector, forcedProfile(request.alphabetName()), readers, writer, naming);
+                    file, detector, forcedProfile(request.alphabetName()),
+                    request.scorerName(), readers, writer, naming);
         };
     }
 

@@ -24,11 +24,11 @@ class CryptoServiceTest {
         Path input = write(dir, "msg.txt", "Hello, World!");
 
         Path encrypted = service.execute(
-                new CryptoRequest(Operation.ENCRYPT, input, 5, "caesar", null, "default"));
+                new CryptoRequest(Operation.ENCRYPT, input, 5, "caesar", null, "default", "dictionary"));
         assertTrue(encrypted.getFileName().toString().contains("[ENCRYPTED]"));
 
         Path decrypted = service.execute(
-                new CryptoRequest(Operation.DECRYPT, encrypted, 5, "caesar", null, "default"));
+                new CryptoRequest(Operation.DECRYPT, encrypted, 5, "caesar", null, "default", "dictionary"));
         assertEquals("Hello, World!", Files.readString(decrypted));
         assertTrue(decrypted.getFileName().toString().contains("[DECRYPTED]"));
         assertFalse(decrypted.getFileName().toString().contains("[ENCRYPTED]"));
@@ -39,10 +39,10 @@ class CryptoServiceTest {
         String original = "The quick brown fox jumps over the lazy dog and the cat.";
         Path input = write(dir, "secret.txt", original);
         Path encrypted = service.execute(
-                new CryptoRequest(Operation.ENCRYPT, input, 9, "caesar", null, "default"));
+                new CryptoRequest(Operation.ENCRYPT, input, 9, "caesar", null, "default", "dictionary"));
 
         Path cracked = service.execute(
-                new CryptoRequest(Operation.BRUTE_FORCE, encrypted, null, "caesar", null, "auto"));
+                new CryptoRequest(Operation.BRUTE_FORCE, encrypted, null, "caesar", null, "auto", "dictionary"));
 
         assertEquals(original, Files.readString(cracked));
     }
@@ -51,9 +51,9 @@ class CryptoServiceTest {
     void vigenereRoundTripsThroughService(@TempDir Path dir) throws IOException {
         Path input = write(dir, "v.txt", "ATTACKATDAWN");
         Path encrypted = service.execute(
-                new CryptoRequest(Operation.ENCRYPT, input, null, "vigenere", "LEMON", "en"));
+                new CryptoRequest(Operation.ENCRYPT, input, null, "vigenere", "LEMON", "en", "dictionary"));
         Path decrypted = service.execute(
-                new CryptoRequest(Operation.DECRYPT, encrypted, null, "vigenere", "LEMON", "en"));
+                new CryptoRequest(Operation.DECRYPT, encrypted, null, "vigenere", "LEMON", "en", "dictionary"));
         assertEquals("ATTACKATDAWN", Files.readString(decrypted));
     }
 }

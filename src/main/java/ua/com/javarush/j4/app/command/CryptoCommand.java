@@ -1,5 +1,6 @@
 package ua.com.javarush.j4.app.command;
 
+import ua.com.javarush.j4.error.UnreadableSourceException;
 import ua.com.javarush.j4.io.OutputNaming;
 import ua.com.javarush.j4.io.TextReaders;
 import ua.com.javarush.j4.io.TextWriter;
@@ -22,7 +23,12 @@ public abstract class CryptoCommand {
     }
 
     public final Path execute() throws IOException {
-        String text = readers.pick(input).read(input);
+        String text;
+        try {
+            text = readers.pick(input).read(input);
+        } catch (IOException e) {
+            throw new UnreadableSourceException("Cannot read input file: " + input, e);
+        }
         String result = transform(text);
         Path output = outputPath(naming, input);
         writer.write(output, result);
