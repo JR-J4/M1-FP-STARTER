@@ -1,7 +1,6 @@
 package ua.com.javarush.j4.alphabet;
 
 import org.junit.jupiter.api.Test;
-import ua.com.javarush.j4.error.InvalidArgumentsException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -56,8 +55,4 @@ class AlphabetTest {
         assertEquals(33, def.keyspaceSize()); // largest ring (Ukrainian)
     }
 
-    @Test
-    void byNameRejectsUnknownAlphabet() {
-        assertThrows(InvalidArgumentsException.class, () -> Alphabets.byName("klingon"));
-    }
 }

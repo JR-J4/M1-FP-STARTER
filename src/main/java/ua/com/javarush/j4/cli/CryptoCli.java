@@ -7,6 +7,7 @@ import picocli.CommandLine.Option;
 import ua.com.javarush.j4.app.CryptoRequest;
 import ua.com.javarush.j4.app.CryptoService;
 import ua.com.javarush.j4.app.Operation;
+import ua.com.javarush.j4.cipher.CipherSpec;
 
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
@@ -53,8 +54,8 @@ public final class CryptoCli implements Callable<Integer> {
     @Override
     public Integer call() throws Exception {
         Operation operation = selectedOperation();
-        new CryptoService().execute(
-                new CryptoRequest(operation, file, key, cipher, keyword, alphabet, scorer));
+        new CryptoService().execute(new CryptoRequest(
+                operation, file, new CipherSpec(cipher, key, keyword), alphabet, scorer));
         return 0;
     }
 

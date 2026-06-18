@@ -61,6 +61,17 @@ class CryptoCliTest {
         assertEquals(before, list(dir));
     }
 
+    @Test
+    void bruteForceRejectsNonCaesarCipher(@TempDir Path dir) throws IOException {
+        Path input = dir.resolve("bf.txt");
+        Files.writeString(input, "HELLO");
+        List<Path> before = list(dir);
+
+        assertDoesNotThrow(() ->
+                new CryptoCli().run(new String[]{"-b", "-c", "vigenere", "--keyword", "KEY", "-f", input.toString()}));
+        assertEquals(before, list(dir), "no file should be written when brute-force rejects the cipher");
+    }
+
     /**
      * Integration test for the --scorer=frequency flag end-to-end.
      * Encrypts a long English passage with a known key, then brute-forces it

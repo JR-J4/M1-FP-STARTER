@@ -8,10 +8,11 @@ import ua.com.javarush.j4.app.command.DecryptCommand;
 import ua.com.javarush.j4.app.command.EncryptCommand;
 import ua.com.javarush.j4.cipher.Cipher;
 import ua.com.javarush.j4.cipher.CipherCatalog;
-import ua.com.javarush.j4.cipher.CipherSpec;
+import ua.com.javarush.j4.crack.Language;
 import ua.com.javarush.j4.crack.LanguageDetector;
 import ua.com.javarush.j4.crack.Languages;
 import ua.com.javarush.j4.crack.ScorerCatalog;
+import ua.com.javarush.j4.error.InvalidArgumentsException;
 import ua.com.javarush.j4.io.FileTextWriter;
 import ua.com.javarush.j4.io.OutputNaming;
 import ua.com.javarush.j4.io.TextReaders;
@@ -38,16 +39,24 @@ public final class CryptoService {
         return switch (request.operation()) {
             case ENCRYPT -> new EncryptCommand(file, cipher(request), readers, writer, naming);
             case DECRYPT -> new DecryptCommand(file, cipher(request), readers, writer, naming);
-            case BRUTE_FORCE -> new BruteForceCommand(
-                    file, detector,
-                    Languages.byCode(request.alphabetName()).orElse(null),
-                    scorers, request.scorerName(), readers, writer, naming);
+            case BRUTE_FORCE -> bruteForce(request, file);
         };
     }
 
     private Cipher cipher(CryptoRequest request) {
-        Alphabet alphabet = Alphabets.byName(request.alphabetName());
-        return ciphers.create(
-                new CipherSpec(request.cipherName(), request.key(), request.keyword()), alphabet);
+        Alphabet alphabet = Languages.byCode(request.languageCode())
+                .map(Language::alphabet)
+                .orElse(Alphabets.DEFAULT);
+        return ciphers.create(request.cipherSpec(), alphabet);
+    }
+
+    private CryptoCommand bruteForce(CryptoRequest request, Path file) {
+        if (!"caesar".equalsIgnoreCase(request.cipherSpec().cipherName())) {
+            throw new InvalidArgumentsException("Brute-force is supported only for the caesar cipher");
+        }
+        return new BruteForceCommand(
+                file, detector,
+                Languages.byCode(request.languageCode()).orElse(null),
+                scorers, request.scorerName(), readers, writer, naming);
     }
 }
