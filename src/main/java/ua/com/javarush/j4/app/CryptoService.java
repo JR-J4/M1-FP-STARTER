@@ -12,6 +12,7 @@ import ua.com.javarush.j4.cipher.CipherSpec;
 import ua.com.javarush.j4.crack.LanguageDetector;
 import ua.com.javarush.j4.crack.Languages;
 import ua.com.javarush.j4.crack.ScorerCatalog;
+import ua.com.javarush.j4.io.FileTextWriter;
 import ua.com.javarush.j4.io.OutputNaming;
 import ua.com.javarush.j4.io.TextReaders;
 import ua.com.javarush.j4.io.TextWriter;
@@ -21,8 +22,8 @@ import java.nio.file.Path;
 
 /** Facade: turns a CryptoRequest into the right command and runs it. */
 public final class CryptoService {
-    private final TextReaders readers = new TextReaders();
-    private final TextWriter writer = new TextWriter();
+    private final TextReaders readers = TextReaders.withDefaults();
+    private final TextWriter writer = new FileTextWriter();
     private final OutputNaming naming = new OutputNaming();
     private final CipherCatalog ciphers = CipherCatalog.withDefaults();
     private final LanguageDetector detector = new LanguageDetector();

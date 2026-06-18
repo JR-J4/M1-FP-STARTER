@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class TextReadersTest {
 
-    private final TextReaders readers = new TextReaders();
+    private final TextReaders readers = TextReaders.withDefaults();
 
     @Test
     void picksPlainReaderForTxt() {
@@ -34,6 +34,11 @@ class TextReadersTest {
     @Test
     void fallsBackToPlainForUnknownExtension() {
         assertTrue(readers.pick(Path.of("a.dat")) instanceof PlainTextReader);
+    }
+
+    @Test
+    void picksPdfReaderForPdf() {
+        assertTrue(TextReaders.withDefaults().pick(java.nio.file.Path.of("a.pdf")) instanceof PdfReader);
     }
 
     @Test
