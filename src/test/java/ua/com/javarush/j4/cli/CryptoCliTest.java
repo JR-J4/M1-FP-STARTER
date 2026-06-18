@@ -2,6 +2,7 @@ package ua.com.javarush.j4.cli;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import ua.com.javarush.j4.Composition;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -26,7 +27,7 @@ class CryptoCliTest {
         Path input = dir.resolve("a.txt");
         Files.writeString(input, "HELLO");
 
-        new CryptoCli().run(new String[]{"-e", "-c", "rot13", "-f", input.toString()});
+        new Composition().cli().run(new String[]{"-e", "-c", "rot13", "-f", input.toString()});
 
         Path out = dir.resolve("a [ENCRYPTED].txt");
         assertEquals("URYYB", Files.readString(out));
@@ -37,7 +38,7 @@ class CryptoCliTest {
         Path input = dir.resolve("b.txt");
         Files.writeString(input, "HELLO");
 
-        new CryptoCli().run(new String[]{"-e", "-c", "vigenere", "--keyword", "KEY", "-f", input.toString()});
+        new Composition().cli().run(new String[]{"-e", "-c", "vigenere", "--keyword", "KEY", "-f", input.toString()});
 
         assertEquals("RIJVS", Files.readString(dir.resolve("b [ENCRYPTED].txt")));
     }
@@ -49,14 +50,14 @@ class CryptoCliTest {
         List<Path> before = list(dir);
 
         assertDoesNotThrow(() ->
-                new CryptoCli().run(new String[]{"-e", "-c", "enigma", "-f", input.toString()}));
+                new Composition().cli().run(new String[]{"-e", "-c", "enigma", "-f", input.toString()}));
         assertEquals(before, list(dir));
     }
 
     @Test
     void helpReturnsZeroAndWritesNothing(@TempDir Path dir) {
         List<Path> before = list(dir);
-        int code = new CryptoCli().run(new String[]{"--help"});
+        int code = new Composition().cli().run(new String[]{"--help"});
         assertEquals(0, code);
         assertEquals(before, list(dir));
     }
@@ -68,7 +69,7 @@ class CryptoCliTest {
         List<Path> before = list(dir);
 
         assertDoesNotThrow(() ->
-                new CryptoCli().run(new String[]{"-b", "-c", "vigenere", "--keyword", "KEY", "-f", input.toString()}));
+                new Composition().cli().run(new String[]{"-b", "-c", "vigenere", "--keyword", "KEY", "-f", input.toString()}));
         assertEquals(before, list(dir), "no file should be written when brute-force rejects the cipher");
     }
 
@@ -91,12 +92,12 @@ class CryptoCliTest {
         Files.writeString(input, original);
 
         // Encrypt with key 13 via the CLI
-        new CryptoCli().run(new String[]{"-e", "-k", "13", "-f", input.toString()});
+        new Composition().cli().run(new String[]{"-e", "-k", "13", "-f", input.toString()});
         Path encrypted = dir.resolve("prose [ENCRYPTED].txt");
         assertTrue(Files.exists(encrypted), "encrypted file should exist");
 
         // Brute-force with frequency scorer
-        new CryptoCli().run(new String[]{"-b", "-s", "frequency", "-f", encrypted.toString()});
+        new Composition().cli().run(new String[]{"-b", "-s", "frequency", "-f", encrypted.toString()});
         Path cracked = dir.resolve("prose [DECRYPTED].txt");
 
         assertEquals(original, Files.readString(cracked),

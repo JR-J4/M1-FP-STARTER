@@ -20,6 +20,12 @@ import java.util.concurrent.Callable;
         description = "Caesar-family cipher tool: encrypt, decrypt, or brute-force a text file.")
 public final class CryptoCli implements Callable<Integer> {
 
+    private final CryptoService service;
+
+    public CryptoCli(CryptoService service) {
+        this.service = service;
+    }
+
     /** Exactly one command must be chosen. */
     @ArgGroup(multiplicity = "1")
     private CommandSelection command;
@@ -54,7 +60,7 @@ public final class CryptoCli implements Callable<Integer> {
     @Override
     public Integer call() throws Exception {
         Operation operation = selectedOperation();
-        new CryptoService().execute(new CryptoRequest(
+        service.execute(new CryptoRequest(
                 operation, file, new CipherSpec(cipher, key, keyword), alphabet, scorer));
         return 0;
     }

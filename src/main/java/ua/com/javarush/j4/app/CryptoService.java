@@ -13,7 +13,6 @@ import ua.com.javarush.j4.crack.LanguageDetector;
 import ua.com.javarush.j4.crack.Languages;
 import ua.com.javarush.j4.crack.ScorerCatalog;
 import ua.com.javarush.j4.error.InvalidArgumentsException;
-import ua.com.javarush.j4.io.FileTextWriter;
 import ua.com.javarush.j4.io.OutputNaming;
 import ua.com.javarush.j4.io.TextReaders;
 import ua.com.javarush.j4.io.TextWriter;
@@ -23,12 +22,22 @@ import java.nio.file.Path;
 
 /** Facade: turns a CryptoRequest into the right command and runs it. */
 public final class CryptoService {
-    private final TextReaders readers = TextReaders.withDefaults();
-    private final TextWriter writer = new FileTextWriter();
-    private final OutputNaming naming = new OutputNaming();
-    private final CipherCatalog ciphers = CipherCatalog.withDefaults();
-    private final LanguageDetector detector = new LanguageDetector();
-    private final ScorerCatalog scorers = ScorerCatalog.withDefaults();
+    private final CipherCatalog ciphers;
+    private final ScorerCatalog scorers;
+    private final LanguageDetector detector;
+    private final TextReaders readers;
+    private final TextWriter writer;
+    private final OutputNaming naming;
+
+    public CryptoService(CipherCatalog ciphers, ScorerCatalog scorers, LanguageDetector detector,
+                         TextReaders readers, TextWriter writer, OutputNaming naming) {
+        this.ciphers = ciphers;
+        this.scorers = scorers;
+        this.detector = detector;
+        this.readers = readers;
+        this.writer = writer;
+        this.naming = naming;
+    }
 
     public Path execute(CryptoRequest request) throws IOException {
         return command(request).execute();
