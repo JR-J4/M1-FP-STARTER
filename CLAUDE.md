@@ -11,7 +11,8 @@ The starter ships only an empty `Main` — students design and write every class
 ## Build, test, run
 
 - Java 17 + Maven wrapper (`./mvnw` — no local Maven install required).
-- Run all tests: `./mvnw test`
+- Run all tests: `./mvnw test` (English only; Ukrainian cases are skipped by default)
+- Enable the optional Ukrainian cases: `./mvnw test -Dtest.lang.ua=true`
 - Run a single nested group: `./mvnw -Dtest='MainTest$LanguageTests' test`
 - Run a single test method: `./mvnw -Dtest='MainTest$LanguageTests#encrypt' test`
 - Package the runnable jar: `./mvnw package` (output `target/J4-M1-FP-1.0-SNAPSHOT.jar`)
@@ -20,21 +21,25 @@ The starter ships only an empty `Main` — students design and write every class
 
 ## CLI convention — important
 
-The starter and its tests use **option-style** arguments:
+The starter and its tests use **option-style** arguments, deliberately modelled on the [POSIX Utility Conventions](https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap12.html):
 
 ```
--e | -d | -bf      command (encrypt / decrypt / brute force)
--k <int>           key (required for -e and -d)
+-e | -d | -b       command (encrypt / decrypt / brute force)
+-k <int>           key (required for -e and -d; NOT passed for -b)
 -f <path>          file path
 ```
 
-Example: `-e -k 5 -f /path/to/file.txt`. Order must be arbitrary — students write the parser themselves and the validation tests cover every error condition.
+Example: `-e -k 5 -f /path/to/file.txt`. Order must be arbitrary (pinned by `EncryptFileTests#argumentOrderIsArbitrary`) — students write the parser themselves and the validation tests cover every error condition. All command flags are single-character (`-b`, not `-bf`) to satisfy POSIX Guideline 3 and avoid the Guideline 5 grouping ambiguity where `-bf` would parse as `-b -f`.
 
-Note that the PDF spec describes a different, **positional** convention (`ENCRYPT <path> <key>` / `BRUTE_FORCE`). The starter tests follow the option-style convention above — when in doubt, match the tests, not the PDF.
+Note that the PDF spec describes a different, **positional** convention (`ENCRYPT <path> <key>` / `BRUTE_FORCE`). The starter intentionally diverges to teach the more standard, tool-portable POSIX shape — when in doubt, match the tests, not the PDF.
 
 ## Output file naming
 
 Encrypted output goes to `foo [ENCRYPTED].txt`; decrypted output to `foo [DECRYPTED].txt`. The `[DECRYPTED]` marker *replaces* `[ENCRYPTED]` rather than being appended — `foo [ENCRYPTED].txt` → `foo [DECRYPTED].txt`, not `foo [ENCRYPTED] [DECRYPTED].txt`. Filenames are assumed to end in `.txt`. Tests pin these rules via `MainTest$FileTests`.
+
+## Cipher model — important
+
+The English alphabet is **26 letters with case preserved**, modelled as two independent rings (upper and lower). A shift never crosses case: `A`−1=`Z`, `a`−1=`z` (NOT `A`−1=`z`). Keys normalize mod 26, so 26 ≡ 0 and 27 ≡ 1. This is the conventional Caesar behaviour and is pinned by `EncryptEdgeCases#negativeKeyWrapsWithinCase`. (The optional Ukrainian alphabet is a separate 33-letter ring.)
 
 ## Architecture
 
@@ -50,8 +55,8 @@ End-to-end tests live in `src/test/java/.../MainTest.java`. Every test drives `M
 
 Nested groups in `MainTest`:
 - `FileTests` — file creation, markers, filename transformation, plus content sanity checks (encrypt result matches expected ciphertext for small fixtures; round-trip restores original).
-- `LanguageTests` — single parametrized group covering both English and Ukrainian: single-char encrypt, single-char decrypt, full encrypt→decrypt cycle, brute-force recovery. Each scenario runs once per language.
-- `EncryptEdgeCases` — empty file, key=0/52/53/-52, digits/special chars, multiline. English-only by design.
+- `LanguageTests` — single parametrized group covering both English and Ukrainian: single-char encrypt, single-char decrypt, full encrypt→decrypt cycle, brute-force recovery. Each scenario runs once per language. **Ukrainian invocations are gated** behind `Boolean.getBoolean("test.lang.ua")` via a shared `assumeLanguageEnabled(lang)` helper — they report as *skipped* (JUnit assumption), not failed, unless `-Dtest.lang.ua=true` is set.
+- `EncryptEdgeCases` — empty file, key=0/26/27/-26, digits/special chars, multiline. English-only by design.
 - `OriginalFileSafety` — input file is unchanged after encrypt.
 - `ValidationTests` — missing/unknown flags, non-numeric keys, non-existent file. All assert via "no new file appears in `@TempDir`" + `assertDoesNotThrow`.
 

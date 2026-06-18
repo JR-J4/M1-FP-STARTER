@@ -33,10 +33,16 @@ import static org.junit.jupiter.api.Assertions.*;
 class MainTest {
     private static final String ENCRYPT_COMMAND = "-e";
     private static final String DECRYPT_COMMAND = "-d";
-    private static final String BF_COMMAND = "-bf";
+    private static final String BF_COMMAND = "-b";
 
     private static final String HAMLET_EN = loadResource("hamlet.txt");
     private static final String ORWELL_UA = loadResource("orwell.txt");
+
+    /**
+     * Українські тести вимкнено за замовчуванням. Увімкни їх прапорцем
+     * {@code -Dtest.lang.ua=true} (напр. {@code ./mvnw test -Dtest.lang.ua=true}).
+     */
+    private static final boolean UA_ENABLED = Boolean.getBoolean("test.lang.ua");
 
     private static String loadResource(String resourceName) {
         try (var in = MainTest.class.getResourceAsStream("/" + resourceName)) {
@@ -72,8 +78,19 @@ class MainTest {
      * і крок із CHECKLIST, у якому ця команда реалізовується.
      */
     private Path execute(String command, Path inputFilePath, int key) {
+        return execute(new String[]{command, "-k", String.valueOf(key), "-f", inputFilePath.toString()}, command);
+    }
+
+    /**
+     * Перебір ключів ({@code -b}) не потребує ключа — за технічним завданням команда
+     * сама його підбирає. Тому ця версія формує аргументи без {@code -k}.
+     */
+    private Path execute(String command, Path inputFilePath) {
+        return execute(new String[]{command, "-f", inputFilePath.toString()}, command);
+    }
+
+    private Path execute(String[] args, String command) {
         List<Path> filesBefore = listFiles(tempDir);
-        String[] args = {command, "-k", String.valueOf(key), "-f", inputFilePath.toString()};
 
         try {
             Main.main(args);
@@ -100,7 +117,7 @@ class MainTest {
         return switch (command) {
             case ENCRYPT_COMMAND -> "Команда '-e' (шифрування). Див. CHECKLIST крок 1";
             case DECRYPT_COMMAND -> "Команда '-d' (розшифрування). Див. CHECKLIST крок 2";
-            case BF_COMMAND      -> "Команда '-bf' (перебір ключів). Див. CHECKLIST крок 3";
+            case BF_COMMAND      -> "Команда '-b' (перебір ключів). Див. CHECKLIST крок 3";
             default              -> "Команда '" + command + "'";
         };
     }
@@ -170,6 +187,27 @@ class MainTest {
                         "Очікувалась мітка '[ENCRYPTED]' в імені файлу: "
                                 + encryptedFile.getFileName());
             }
+
+            /**
+             * <b>Що перевіряє:</b> порядок аргументів довільний — {@code -f}, {@code -k}
+             * і команда {@code -e} у будь-якій послідовності дають той самий результат
+             * ({@code "ABC"} + 1 = {@code "BCD"}).
+             *
+             * <p><b>Як пройти:</b> парсер має визначати команду й опції за самими
+             * прапорцями, а не за їхньою позицією.
+             */
+            @Test
+            @DisplayName("Порядок аргументів довільний (-f, -k, -e у будь-якому порядку)")
+            void argumentOrderIsArbitrary() throws IOException {
+                Path input = createTestFile("plain.txt", "ABC");
+
+                Path encrypted = execute(
+                        new String[]{"-f", input.toString(), "-k", "1", ENCRYPT_COMMAND},
+                        ENCRYPT_COMMAND);
+
+                assertEquals("BCD", readFile(encrypted),
+                        "Програма має приймати аргументи у довільному порядку.");
+            }
         }
 
         @Nested
@@ -235,7 +273,7 @@ class MainTest {
             void bruteForceFileCreating() {
                 Path encrypted = execute(ENCRYPT_COMMAND, inputFilePathEN, 5);
 
-                Path bruteForced = execute(BF_COMMAND, encrypted, 5);
+                Path bruteForced = execute(BF_COMMAND, encrypted);
 
                 assertTrue(Files.exists(bruteForced), "Файл після brute-force не створено.");
                 assertEquals(HAMLET_EN, readFile(bruteForced),
@@ -311,18 +349,28 @@ class MainTest {
         }
 
         /**
+         * Пропускає українські сценарії, поки не ввімкнено прапорець
+         * {@code -Dtest.lang.ua=true}. Англійські сценарії виконуються завжди.
+         */
+        private void assumeLanguageEnabled(String lang) {
+            Assumptions.assumeTrue(!"UA".equals(lang) || UA_ENABLED,
+                    "Українські тести вимкнено. Увімкни їх прапорцем -Dtest.lang.ua=true");
+        }
+
+        /**
          * <b>Що перевіряє:</b> базовий зсув літер по відповідному алфавіту:
          * A+1=B, a+25=z для англ.; А+1=Б, а+32=я для укр.
          *
          * <p><b>Як пройти:</b> реалізуй шифрування Цезаря, що зсуває літери в межах
-         * власного регістру (велика залишається великою, мала — малою). Українські
-         * літери мають бути в окремому 33-літерному алфавіті
-         * (А Б В Г Ґ Д Е Є Ж З И І Ї Й К Л М Н О П Р С Т У Ф Х Ц Ч Ш Щ Ь Ю Я плюс малі літери).
+         * власного регістру (велика залишається великою, мала — малою). Український
+         * алфавіт (33 літери) описано в CHECKLIST крок 4 — використовуй його як
+         * окреме коло.
          */
         @ParameterizedTest(name = "[{0}] ШИФР: {1} + {2} = {3}")
         @MethodSource("singleLetterEncryptCases")
         @DisplayName("[ШИФРУВАННЯ] Окремі літери (EN + UA)")
         void encrypt(String lang, String input, int key, String expected) throws IOException {
+            assumeLanguageEnabled(lang);
             Path file = createTestFile("letter_" + lang + ".txt", input);
 
             Path encrypted = execute(ENCRYPT_COMMAND, file, key);
@@ -341,6 +389,7 @@ class MainTest {
         @MethodSource("singleLetterDecryptCases")
         @DisplayName("[РОЗШИФРУВАННЯ] Окремі літери (EN + UA)")
         void decrypt(String lang, String input, int key, String expected) throws IOException {
+            assumeLanguageEnabled(lang);
             Path file = createTestFile("letter_" + lang + ".txt", input);
 
             Path decrypted = execute(DECRYPT_COMMAND, file, key);
@@ -360,6 +409,7 @@ class MainTest {
         @MethodSource("fixtures")
         @DisplayName("[РОЗШИФРУВАННЯ] Цикл encrypt → decrypt повертає оригінал (EN + UA)")
         void fullCycle(String lang, String fixture) throws IOException {
+            assumeLanguageEnabled(lang);
             Path input = createTestFile("fixture_" + lang + ".txt", fixture);
 
             Path encrypted = execute(ENCRYPT_COMMAND, input, 5);
@@ -381,10 +431,11 @@ class MainTest {
         @MethodSource("fixtures")
         @DisplayName("[ПЕРЕБІР КЛЮЧІВ] Знаходить ключ і повертає оригінал (EN + UA)")
         void bruteForce(String lang, String fixture) throws IOException {
+            assumeLanguageEnabled(lang);
             Path input = createTestFile("fixture_" + lang + ".txt", fixture);
             Path encrypted = execute(ENCRYPT_COMMAND, input, 5);
 
-            Path bruteForced = execute(BF_COMMAND, encrypted, 5);
+            Path bruteForced = execute(BF_COMMAND, encrypted);
 
             assertEquals(fixture, readFile(bruteForced),
                     "Brute-force не відновив оригінал точно (з урахуванням регістру).");
@@ -404,17 +455,6 @@ class MainTest {
             Path testFile = createTestFile("empty.txt", "");
             Path encryptedFile = execute(ENCRYPT_COMMAND, testFile, 5);
             assertEquals("", readFile(encryptedFile));
-        }
-
-        /**
-         * <b>Що перевіряє:</b> файл з єдиною літерою 'A' з ключем 1 → 'B'.
-         */
-        @Test
-        @DisplayName("Один символ: 'A' з ключем 1 → 'B'")
-        void singleLetter() throws IOException {
-            Path testFile = createTestFile("single.txt", "A");
-            Path encryptedFile = execute(ENCRYPT_COMMAND, testFile, 1);
-            assertEquals("B", readFile(encryptedFile));
         }
 
         /**
@@ -443,54 +483,54 @@ class MainTest {
         }
 
         /**
-         * <b>Що перевіряє:</b> ключ 52 = повний оберт по 52-символьному алфавіту (A..Z + a..z),
+         * <b>Що перевіряє:</b> ключ 26 = повний оберт по 26-літерному алфавіту,
          * тому результат тотожний оригіналу.
          */
         @Test
-        @DisplayName("Ключ 52 (повне коло алфавіту) — текст не змінюється")
+        @DisplayName("Ключ 26 (повне коло алфавіту) — текст не змінюється")
         void keyFullCycle() throws IOException {
-            Path testFile = createTestFile("k52.txt", "Hello");
-            Path encryptedFile = execute(ENCRYPT_COMMAND, testFile, 52);
+            Path testFile = createTestFile("k26.txt", "Hello");
+            Path encryptedFile = execute(ENCRYPT_COMMAND, testFile, 26);
             assertEquals("Hello", readFile(encryptedFile));
         }
 
         /**
          * <b>Що перевіряє:</b> ключі більші за розмір алфавіту нормалізуються по колу:
-         * 53 mod 52 = 1, тому ключ 53 дає той самий результат, що ключ 1.
+         * 27 mod 26 = 1, тому ключ 27 дає той самий результат, що ключ 1.
          */
         @Test
-        @DisplayName("Ключ 53 дає той самий результат, що ключ 1")
+        @DisplayName("Ключ 27 дає той самий результат, що ключ 1")
         void keyOverCycle() throws IOException {
             Path withK1 = execute(ENCRYPT_COMMAND, createTestFile("k1.txt", "Hello"), 1);
-            Path withK53 = execute(ENCRYPT_COMMAND, createTestFile("k53.txt", "Hello"), 53);
-            assertEquals(readFile(withK1), readFile(withK53));
+            Path withK27 = execute(ENCRYPT_COMMAND, createTestFile("k27.txt", "Hello"), 27);
+            assertEquals(readFile(withK1), readFile(withK27));
         }
 
         /**
-         * <b>Що перевіряє:</b> від'ємний ключ -52 = повний оберт у зворотному напрямку,
+         * <b>Що перевіряє:</b> від'ємний ключ -26 = повний оберт у зворотному напрямку,
          * текст не змінюється.
          */
         @Test
-        @DisplayName("Ключ -52 (повне коло назад) — текст не змінюється")
+        @DisplayName("Ключ -26 (повне коло назад) — текст не змінюється")
         void keyNegativeFullCycle() throws IOException {
-            Path testFile = createTestFile("kneg52.txt", "Hello");
-            Path encryptedFile = execute(ENCRYPT_COMMAND, testFile, -52);
+            Path testFile = createTestFile("kneg26.txt", "Hello");
+            Path encryptedFile = execute(ENCRYPT_COMMAND, testFile, -26);
             assertEquals("Hello", readFile(encryptedFile));
         }
 
         /**
-         * <b>Що перевіряє:</b> від'ємні ключі коректно зсувають по колу через межу
-         * регістру: A-1=z, a-1=Z, Z-25=A, z-25=a. Тобто 52-літерний алфавіт A..Z+a..z
-         * сприймається як єдине коло, і при «недольоті» нижче 'A' зсув продовжується
-         * у малі літери (і навпаки).
+         * <b>Що перевіряє:</b> від'ємні ключі коректно зсувають по колу в межах
+         * власного регістру: A-1=Z, a-1=z, Z-25=A, z-25=a. Тобто великі й малі літери —
+         * це два незалежні 26-літерні кола, і при «недольоті» нижче 'A' зсув
+         * продовжується з 'Z' того ж регістру (велика залишається великою, мала — малою).
          *
          * <p><b>Як пройти:</b> алгоритм має підтримувати від'ємні ключі. Найпростіше —
-         * нормалізувати ключ по модулю розміру алфавіту перед зсувом.
+         * нормалізувати ключ по модулю розміру алфавіту (26) перед зсувом.
          */
-        @DisplayName("Від'ємний ключ зсуває по колу через межу регістру")
+        @DisplayName("Від'ємний ключ зсуває по колу в межах регістру")
         @ParameterizedTest
-        @CsvSource({"A, -1, z", "a, -1, Z", "Z, -25, A", "z, -25, a"})
-        void negativeKeyWrapsAroundCaseBoundary(String input, int key, String expected) throws IOException {
+        @CsvSource({"A, -1, Z", "a, -1, z", "Z, -25, A", "z, -25, a"})
+        void negativeKeyWrapsWithinCase(String input, int key, String expected) throws IOException {
             Path testFile = createTestFile("neg.txt", input);
 
             Path encryptedFile = execute(ENCRYPT_COMMAND, testFile, key);
