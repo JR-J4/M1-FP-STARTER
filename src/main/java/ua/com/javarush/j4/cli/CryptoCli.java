@@ -7,7 +7,6 @@ import picocli.CommandLine.Option;
 import ua.com.javarush.j4.app.CryptoRequest;
 import ua.com.javarush.j4.app.CryptoService;
 import ua.com.javarush.j4.app.Operation;
-import ua.com.javarush.j4.error.InvalidArgumentsException;
 
 import java.nio.file.Path;
 import java.util.concurrent.Callable;

@@ -6,6 +6,19 @@
 
 ---
 
+## Extended capabilities (reimplementation)
+
+Beyond the base Caesar cryptanalyzer, this build supports:
+
+- **Ciphers** (`-c/--cipher`): `caesar` (default), `rot13`, `atbash`, `vigenere` (`--keyword <word>`).
+- **Alphabets** (`-a/--alphabet`): `en`, `ua`, `ru`, `auto` (default handles English + Ukrainian).
+- **File formats**: `.txt`, `.md`, and gzip `.gz`, chosen automatically by extension.
+- **Brute-force**: language auto-detection + pluggable fitness scoring (common-words and letter-frequency).
+
+The original `-e/-d/-b -k -f` command line is unchanged.
+
+---
+
 ## Про проєкт
 
 Цей проєкт навчає реалізації класичного **шифру Цезаря** на Java з трьома режимами роботи.

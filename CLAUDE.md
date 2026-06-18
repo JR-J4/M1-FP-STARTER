@@ -15,8 +15,9 @@ The starter ships only an empty `Main` — students design and write every class
 - Enable the optional Ukrainian cases: `./mvnw test -Dtest.lang.ua=true`
 - Run a single nested group: `./mvnw -Dtest='MainTest$LanguageTests' test`
 - Run a single test method: `./mvnw -Dtest='MainTest$LanguageTests#encrypt' test`
-- Package the runnable jar: `./mvnw package` (output `target/J4-M1-FP-1.0-SNAPSHOT.jar`)
+- Package the runnable jar: `./mvnw package` (output `target/J4-M1-FP-1.0-SNAPSHOT.jar`, a shaded fat jar including picocli)
 - Run the jar: `java -jar target/J4-M1-FP-1.0-SNAPSHOT.jar -e -k 5 -f path.txt`
+- Show help: `java -jar target/J4-M1-FP-1.0-SNAPSHOT.jar --help`
 - CI: `.github/workflows/run_tests.yaml` runs `mvn package` on every push.
 
 ## CLI convention — important
@@ -43,11 +44,18 @@ The English alphabet is **26 letters with case preserved**, modelled as two inde
 
 ## Architecture
 
-Single-module Maven project, package root `ua.com.javarush.j4`. The starter ships exactly one class:
+Single-module Maven project, package root `ua.com.javarush.j4`, organised by responsibility:
 
-- `Main` — entry point with an empty `main(String[] args)` body. Students design and implement everything: argument parsing, file I/O, Caesar cipher, brute-force, output naming, Ukrainian-alphabet support. There is no prescribed class layout; only the externally observable behaviour pinned by `MainTest` matters.
+- `Main` — entry point; delegates to the picocli CLI and never propagates exceptions.
+- `cli/` — `CryptoCli` (picocli `@Command`); parses the legacy `-e/-d/-b`, `-k`, `-f` contract plus additive `--cipher`, `--keyword`, `--alphabet` flags.
+- `app/` — `CryptoService` facade + `command/` (Template-Method `CryptoCommand`: Encrypt/Decrypt/BruteForce).
+- `cipher/` — `Cipher` strategy + Caesar/ROT13/Atbash/Vigenère + `CipherFactory`.
+- `alphabet/` — `Alphabet`/`CharacterRing` value objects + `Alphabets` registry (EN/UA/RU + composite default).
+- `crack/` — `Cracker`/`CaesarCracker`, pluggable `FitnessScorer` (dictionary + frequency), `LanguageDetector`/`LanguageProfile`.
+- `io/` — `TextReader` strategies (txt/md/gz) + `TextReaders` registry, `TextWriter`, `OutputNaming`.
+- `error/` — `CryptanalysisException` hierarchy.
 
-Important behaviour constraint: `Main.main` MUST NOT propagate exceptions for invalid CLI arguments or missing files — `MainTest$ValidationTests` asserts `assertDoesNotThrow(...)`. Catch and report cleanly.
+`MainTest` remains the authoritative externally-observable contract; the package layout above is the internal design that satisfies it.
 
 ## Test suite shape
 
