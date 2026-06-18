@@ -1,12 +1,10 @@
 package ua.com.javarush.j4.app.command;
 
 import ua.com.javarush.j4.crack.CaesarCracker;
-import ua.com.javarush.j4.crack.DictionaryScorer;
 import ua.com.javarush.j4.crack.FitnessScorer;
-import ua.com.javarush.j4.crack.FrequencyScorer;
 import ua.com.javarush.j4.crack.Language;
 import ua.com.javarush.j4.crack.LanguageDetector;
-import ua.com.javarush.j4.error.InvalidArgumentsException;
+import ua.com.javarush.j4.crack.ScorerCatalog;
 import ua.com.javarush.j4.io.OutputNaming;
 import ua.com.javarush.j4.io.TextReaders;
 import ua.com.javarush.j4.io.TextWriter;
@@ -17,13 +15,16 @@ import java.nio.file.Path;
 public final class BruteForceCommand extends CryptoCommand {
     private final LanguageDetector detector;
     private final Language forcedProfile; // null => auto-detect
+    private final ScorerCatalog scorerCatalog;
     private final String scorerName;
 
     public BruteForceCommand(Path input, LanguageDetector detector, Language forcedProfile,
-                             String scorerName, TextReaders readers, TextWriter writer, OutputNaming naming) {
+                             ScorerCatalog scorerCatalog, String scorerName,
+                             TextReaders readers, TextWriter writer, OutputNaming naming) {
         super(input, readers, writer, naming);
         this.detector = detector;
         this.forcedProfile = forcedProfile;
+        this.scorerCatalog = scorerCatalog;
         this.scorerName = scorerName;
     }
 
@@ -39,18 +40,9 @@ public final class BruteForceCommand extends CryptoCommand {
          * explicit --alphabet flag to force a profile rather than relying on auto-detect.
          */
         Language profile = forcedProfile != null ? forcedProfile : detector.detect(text);
-        FitnessScorer scorer = buildScorer(scorerName, profile);
+        FitnessScorer scorer = scorerCatalog.create(scorerName, profile);
         CaesarCracker cracker = new CaesarCracker(profile.alphabet(), scorer);
         return cracker.crack(text).plaintext();
-    }
-
-    private static FitnessScorer buildScorer(String name, Language profile) {
-        return switch (name.toLowerCase(java.util.Locale.ROOT)) {
-            case "dictionary" -> new DictionaryScorer(profile);
-            case "frequency"  -> new FrequencyScorer(profile);
-            default -> throw new InvalidArgumentsException(
-                    "Unknown scorer '" + name + "'. Valid values: dictionary, frequency");
-        };
     }
 
     @Override

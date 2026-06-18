@@ -9,16 +9,15 @@ import ua.com.javarush.j4.app.command.EncryptCommand;
 import ua.com.javarush.j4.cipher.Cipher;
 import ua.com.javarush.j4.cipher.CipherCatalog;
 import ua.com.javarush.j4.cipher.CipherSpec;
-import ua.com.javarush.j4.crack.Language;
 import ua.com.javarush.j4.crack.LanguageDetector;
 import ua.com.javarush.j4.crack.Languages;
+import ua.com.javarush.j4.crack.ScorerCatalog;
 import ua.com.javarush.j4.io.OutputNaming;
 import ua.com.javarush.j4.io.TextReaders;
 import ua.com.javarush.j4.io.TextWriter;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Locale;
 
 /** Facade: turns a CryptoRequest into the right command and runs it. */
 public final class CryptoService {
@@ -27,6 +26,7 @@ public final class CryptoService {
     private final OutputNaming naming = new OutputNaming();
     private final CipherCatalog ciphers = CipherCatalog.withDefaults();
     private final LanguageDetector detector = new LanguageDetector();
+    private final ScorerCatalog scorers = ScorerCatalog.withDefaults();
 
     public Path execute(CryptoRequest request) throws IOException {
         return command(request).execute();
@@ -38,8 +38,9 @@ public final class CryptoService {
             case ENCRYPT -> new EncryptCommand(file, cipher(request), readers, writer, naming);
             case DECRYPT -> new DecryptCommand(file, cipher(request), readers, writer, naming);
             case BRUTE_FORCE -> new BruteForceCommand(
-                    file, detector, forcedProfile(request.alphabetName()),
-                    request.scorerName(), readers, writer, naming);
+                    file, detector,
+                    Languages.byCode(request.alphabetName()).orElse(null),
+                    scorers, request.scorerName(), readers, writer, naming);
         };
     }
 
@@ -47,15 +48,5 @@ public final class CryptoService {
         Alphabet alphabet = Alphabets.byName(request.alphabetName());
         return ciphers.create(
                 new CipherSpec(request.cipherName(), request.key(), request.keyword()), alphabet);
-    }
-
-    /** For brute force: a named language forces its profile; "default"/"auto" means auto-detect. */
-    private Language forcedProfile(String alphabetName) {
-        return switch (alphabetName.toLowerCase(Locale.ROOT)) {
-            case "en", "english" -> Languages.ENGLISH;
-            case "ua", "ukrainian" -> Languages.UKRAINIAN;
-            case "ru", "russian" -> Languages.RUSSIAN;
-            default -> null;
-        };
     }
 }
