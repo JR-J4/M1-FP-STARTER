@@ -1,15 +1,18 @@
 package ua.com.javarush.j4.crack;
 
 import ua.com.javarush.j4.alphabet.Alphabets;
+import ua.com.javarush.j4.error.InvalidArgumentsException;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 /** Built-in language profiles (common words, letter frequencies, distinctive letters). */
-public final class LanguageProfiles {
+public final class Languages {
 
-    public static final LanguageProfile ENGLISH = new LanguageProfile(
+    public static final Language ENGLISH = new Language(
             "en",
             Alphabets.ENGLISH,
             Set.of("the", "and", "to", "of", "a", "in", "is", "it", "that", "he",
@@ -26,7 +29,7 @@ public final class LanguageProfiles {
                     Map.entry('p', 1.9), Map.entry('b', 1.5)),
             Set.of()); // English vs Cyrillic is decided by alphabet membership alone
 
-    public static final LanguageProfile UKRAINIAN = new LanguageProfile(
+    public static final Language UKRAINIAN = new Language(
             "ua",
             Alphabets.UKRAINIAN,
             Set.of("і", "в", "на", "з", "що", "не", "як", "до", "за", "це",
@@ -43,7 +46,7 @@ public final class LanguageProfiles {
                     Map.entry('б', 1.7), Map.entry('г', 1.4)),
             Set.of('і', 'І', 'ї', 'Ї', 'є', 'Є', 'ґ', 'Ґ'));
 
-    public static final LanguageProfile RUSSIAN = new LanguageProfile(
+    public static final Language RUSSIAN = new Language(
             "ru",
             Alphabets.RUSSIAN,
             Set.of("и", "в", "не", "на", "я", "что", "тот", "быть", "с", "он",
@@ -60,10 +63,25 @@ public final class LanguageProfiles {
                     Map.entry('б', 1.6), Map.entry('г', 1.7)),
             Set.of('ё', 'Ё', 'ъ', 'Ъ', 'ы', 'Ы', 'э', 'Э'));
 
-    private LanguageProfiles() {
+    private Languages() {
     }
 
-    public static List<LanguageProfile> all() {
+    public static List<Language> all() {
         return List.of(ENGLISH, UKRAINIAN, RUSSIAN);
+    }
+
+    /**
+     * Resolves a language by code. {@code default}/{@code auto} mean "no specific
+     * language" (composite alphabet / auto-detect) and return empty; an unknown
+     * code is rejected.
+     */
+    public static Optional<Language> byCode(String code) {
+        return switch (code.toLowerCase(Locale.ROOT)) {
+            case "en", "english" -> Optional.of(ENGLISH);
+            case "ua", "ukrainian" -> Optional.of(UKRAINIAN);
+            case "ru", "russian" -> Optional.of(RUSSIAN);
+            case "default", "auto" -> Optional.empty();
+            default -> throw new InvalidArgumentsException("Unknown language/alphabet: " + code);
+        };
     }
 }

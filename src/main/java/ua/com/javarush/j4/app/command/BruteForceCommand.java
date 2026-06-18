@@ -4,8 +4,8 @@ import ua.com.javarush.j4.crack.CaesarCracker;
 import ua.com.javarush.j4.crack.DictionaryScorer;
 import ua.com.javarush.j4.crack.FitnessScorer;
 import ua.com.javarush.j4.crack.FrequencyScorer;
+import ua.com.javarush.j4.crack.Language;
 import ua.com.javarush.j4.crack.LanguageDetector;
-import ua.com.javarush.j4.crack.LanguageProfile;
 import ua.com.javarush.j4.error.InvalidArgumentsException;
 import ua.com.javarush.j4.io.OutputNaming;
 import ua.com.javarush.j4.io.TextReaders;
@@ -16,10 +16,10 @@ import java.nio.file.Path;
 /** Brute-force: detect language (unless one is forced), sweep keys, write best decryption. */
 public final class BruteForceCommand extends CryptoCommand {
     private final LanguageDetector detector;
-    private final LanguageProfile forcedProfile; // null => auto-detect
+    private final Language forcedProfile; // null => auto-detect
     private final String scorerName;
 
-    public BruteForceCommand(Path input, LanguageDetector detector, LanguageProfile forcedProfile,
+    public BruteForceCommand(Path input, LanguageDetector detector, Language forcedProfile,
                              String scorerName, TextReaders readers, TextWriter writer, OutputNaming naming) {
         super(input, readers, writer, naming);
         this.detector = detector;
@@ -38,13 +38,13 @@ public final class BruteForceCommand extends CryptoCommand {
          * (Hamlet EN, Orwell UA). For ambiguous real-world input, prefer passing an
          * explicit --alphabet flag to force a profile rather than relying on auto-detect.
          */
-        LanguageProfile profile = forcedProfile != null ? forcedProfile : detector.detect(text);
+        Language profile = forcedProfile != null ? forcedProfile : detector.detect(text);
         FitnessScorer scorer = buildScorer(scorerName, profile);
         CaesarCracker cracker = new CaesarCracker(profile.alphabet(), scorer);
         return cracker.crack(text).plaintext();
     }
 
-    private static FitnessScorer buildScorer(String name, LanguageProfile profile) {
+    private static FitnessScorer buildScorer(String name, Language profile) {
         return switch (name.toLowerCase(java.util.Locale.ROOT)) {
             case "dictionary" -> new DictionaryScorer(profile);
             case "frequency"  -> new FrequencyScorer(profile);

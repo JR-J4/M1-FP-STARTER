@@ -5,9 +5,9 @@ package ua.com.javarush.j4.crack;
  * language: sum of expected frequencies over all letters, normalised by length.
  */
 public final class FrequencyScorer implements FitnessScorer {
-    private final LanguageProfile profile;
+    private final Language profile;
 
-    public FrequencyScorer(LanguageProfile profile) {
+    public FrequencyScorer(Language profile) {
         this.profile = profile;
     }
 

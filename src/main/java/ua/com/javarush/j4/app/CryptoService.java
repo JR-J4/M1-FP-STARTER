@@ -8,9 +8,9 @@ import ua.com.javarush.j4.app.command.DecryptCommand;
 import ua.com.javarush.j4.app.command.EncryptCommand;
 import ua.com.javarush.j4.cipher.Cipher;
 import ua.com.javarush.j4.cipher.CipherFactory;
+import ua.com.javarush.j4.crack.Language;
 import ua.com.javarush.j4.crack.LanguageDetector;
-import ua.com.javarush.j4.crack.LanguageProfile;
-import ua.com.javarush.j4.crack.LanguageProfiles;
+import ua.com.javarush.j4.crack.Languages;
 import ua.com.javarush.j4.io.OutputNaming;
 import ua.com.javarush.j4.io.TextReaders;
 import ua.com.javarush.j4.io.TextWriter;
@@ -48,11 +48,11 @@ public final class CryptoService {
     }
 
     /** For brute force: a named language forces its profile; "default"/"auto" means auto-detect. */
-    private LanguageProfile forcedProfile(String alphabetName) {
+    private Language forcedProfile(String alphabetName) {
         return switch (alphabetName.toLowerCase(Locale.ROOT)) {
-            case "en", "english" -> LanguageProfiles.ENGLISH;
-            case "ua", "ukrainian" -> LanguageProfiles.UKRAINIAN;
-            case "ru", "russian" -> LanguageProfiles.RUSSIAN;
+            case "en", "english" -> Languages.ENGLISH;
+            case "ua", "ukrainian" -> Languages.UKRAINIAN;
+            case "ru", "russian" -> Languages.RUSSIAN;
             default -> null;
         };
     }

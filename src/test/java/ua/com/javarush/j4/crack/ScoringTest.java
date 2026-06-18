@@ -8,7 +8,7 @@ class ScoringTest {
 
     @Test
     void dictionaryScorerRanksRealEnglishHigher() {
-        FitnessScorer scorer = new DictionaryScorer(LanguageProfiles.ENGLISH);
+        FitnessScorer scorer = new DictionaryScorer(Languages.ENGLISH);
         double real = scorer.score("the cat sat on the mat and the dog");
         double garbage = scorer.score("xyz qrs tuv wxy zab cde fgh");
         assertTrue(real > garbage, "real English should score higher than gibberish");
@@ -16,7 +16,7 @@ class ScoringTest {
 
     @Test
     void frequencyScorerRanksRealEnglishHigher() {
-        FitnessScorer scorer = new FrequencyScorer(LanguageProfiles.ENGLISH);
+        FitnessScorer scorer = new FrequencyScorer(Languages.ENGLISH);
         double real = scorer.score("the quick brown fox jumps over the lazy dog");
         double garbage = scorer.score("zzzz qqqq xxxx jjjj kkkk wwww");
         assertTrue(real > garbage);
@@ -24,12 +24,12 @@ class ScoringTest {
 
     @Test
     void detectorIdentifiesEnglish() {
-        assertEquals("en", new LanguageDetector().detect("Hello, this is plain English text.").name());
+        assertEquals("en", new LanguageDetector().detect("Hello, this is plain English text.").code());
     }
 
     @Test
     void detectorIdentifiesUkrainianByDistinctiveLetters() {
         // Contains і, ї — distinctive to Ukrainian, absent in Russian.
-        assertEquals("ua", new LanguageDetector().detect("Привіт, це українська їжа і мова.").name());
+        assertEquals("ua", new LanguageDetector().detect("Привіт, це українська їжа і мова.").code());
     }
 }

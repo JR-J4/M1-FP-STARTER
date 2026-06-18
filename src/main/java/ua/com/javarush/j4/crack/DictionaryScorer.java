@@ -4,9 +4,9 @@ import java.util.Locale;
 
 /** Counts how many whitespace/punctuation-delimited tokens are common words of the language. */
 public final class DictionaryScorer implements FitnessScorer {
-    private final LanguageProfile profile;
+    private final Language profile;
 
-    public DictionaryScorer(LanguageProfile profile) {
+    public DictionaryScorer(Language profile) {
         this.profile = profile;
     }
 

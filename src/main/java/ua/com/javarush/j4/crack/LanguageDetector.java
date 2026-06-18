@@ -8,10 +8,10 @@ package ua.com.javarush.j4.crack;
 public final class LanguageDetector {
     private static final int DISTINCTIVE_WEIGHT = 1000;
 
-    public LanguageProfile detect(String text) {
-        LanguageProfile best = LanguageProfiles.ENGLISH;
+    public Language detect(String text) {
+        Language best = Languages.ENGLISH;
         long bestScore = Long.MIN_VALUE;
-        for (LanguageProfile profile : LanguageProfiles.all()) {
+        for (Language profile : Languages.all()) {
             long score = scoreFor(profile, text);
             if (score > bestScore) {
                 bestScore = score;
@@ -21,7 +21,7 @@ public final class LanguageDetector {
         return best;
     }
 
-    private long scoreFor(LanguageProfile profile, String text) {
+    private long scoreFor(Language profile, String text) {
         long membership = 0;
         long distinctive = 0;
         for (int i = 0; i < text.length(); i++) {

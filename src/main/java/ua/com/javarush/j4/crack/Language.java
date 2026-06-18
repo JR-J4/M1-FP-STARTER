@@ -6,8 +6,8 @@ import java.util.Map;
 import java.util.Set;
 
 /** Everything a scorer/detector needs to judge a text as a given language. */
-public record LanguageProfile(
-        String name,
+public record Language(
+        String code,
         Alphabet alphabet,
         Set<String> commonWords,
         Map<Character, Double> letterFrequencies,

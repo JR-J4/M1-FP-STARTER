@@ -11,11 +11,11 @@ class CaesarCrackerTest {
     void recoversEnglishPlaintextExactly() {
         String original = "The quick brown fox jumps over the lazy dog. "
                 + "And the dog was not amused, for that is what dogs do.";
-        String ciphertext = new CaesarCipher(LanguageProfiles.ENGLISH.alphabet(), 7).encrypt(original);
+        String ciphertext = new CaesarCipher(Languages.ENGLISH.alphabet(), 7).encrypt(original);
 
         CrackResult result = new CaesarCracker(
-                LanguageProfiles.ENGLISH.alphabet(),
-                new DictionaryScorer(LanguageProfiles.ENGLISH)).crack(ciphertext);
+                Languages.ENGLISH.alphabet(),
+                new DictionaryScorer(Languages.ENGLISH)).crack(ciphertext);
 
         assertEquals(7, result.key());
         assertEquals(original, result.plaintext());
@@ -25,11 +25,11 @@ class CaesarCrackerTest {
     void recoversUkrainianPlaintextExactly() {
         String original = "Він був високий і худий, а на обличчі його застигла "
                 + "усмішка. Це не та людина, що боїться зими.";
-        String ciphertext = new CaesarCipher(LanguageProfiles.UKRAINIAN.alphabet(), 12).encrypt(original);
+        String ciphertext = new CaesarCipher(Languages.UKRAINIAN.alphabet(), 12).encrypt(original);
 
         CrackResult result = new CaesarCracker(
-                LanguageProfiles.UKRAINIAN.alphabet(),
-                new DictionaryScorer(LanguageProfiles.UKRAINIAN)).crack(ciphertext);
+                Languages.UKRAINIAN.alphabet(),
+                new DictionaryScorer(Languages.UKRAINIAN)).crack(ciphertext);
 
         assertEquals(12, result.key());
         assertEquals(original, result.plaintext());
