@@ -118,6 +118,26 @@ The same field drives two things depending on the operation:
 **Know this** before adding a flag: the CLI surfaces it as `-a/--alphabet`, but
 for brute-force it means "language to score against," not "alphabet to shift."
 
+## 7. Wiring is centralized in one composition root
+
+`Composition` (root package, beside `Main`) is the only class that constructs
+collaborators. Everything else receives its dependencies via the constructor
+(`CryptoCli(service)`, `CryptoService(ciphers, scorers, detector, readers,
+writer, naming)`). `Main` is just `new Composition().cli().run(args)`. To swap an
+implementation (e.g. an in-memory `TextWriter` in tests), construct the graph
+differently — no production class hard-codes a collaborator.
+
+Named behaviors are resolved through small registries, not `switch` statements:
+`CipherCatalog` (caesar/rot13/atbash/vigenere), `ScorerCatalog`
+(dictionary/frequency), `TextReaders` (gzip/markdown/pdf/plain), and
+`Languages.byCode` (en/ua/ru, with default/auto → auto-detect). Each is populated
+in `Composition` / a `withDefaults()` factory, so adding a variant is a one-line
+registration.
+
+A `Language` (en/ua/ru) composes the shared `Alphabets.*` instance plus its
+linguistic data (common words, frequencies, distinctive letters) — one source of
+truth for alphabets, used for both cipher selection and brute-force scoring.
+
 ## Known, accepted trade-offs (documented, not bugs)
 
 - **Language detection runs on ciphertext** (`app/command/BruteForceCommand.java`,
@@ -126,15 +146,7 @@ for brute-force it means "language to score against," not "alphabet to shift."
   is validated only for the shipped fixtures. Force with `-a ua|ru` for ambiguous
   input. The more robust design ("crack with every profile, keep the best-scoring
   plaintext") is intentionally deferred.
-- **Registries dispatch by `switch`**, not a registered map (`CipherFactory`,
-  `BruteForceCommand.buildScorer`, `Alphabets.byName`, `TextReaders`). Adding a
-  cipher/scorer/alphabet means editing one `switch` — an accepted OCP compromise.
-  The boundaries are drawn so a future move to `ServiceLoader`/SPI is a one-class
-  change.
-- **gzip output is not re-compressed** (`io/OutputNaming` + `io/TextWriter`):
+- **gzip output is not re-compressed** (`io/OutputNaming` + `io/FileTextWriter`):
   `.gz` input is read/decompressed, but output is written as plain UTF-8 with a
   `.gz`-suffixed name. Harmless under the spec's `.txt` assumption; the
   reader/writer abstractions are intentionally asymmetric here.
-- **`CryptoService` constructs its own collaborators** (no DI container). Fine at
-  this size; it is the main spot where DIP is not applied, if you later want to
-  unit-test the facade in isolation.

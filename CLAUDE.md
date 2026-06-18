@@ -46,13 +46,14 @@ The English alphabet is **26 letters with case preserved**, modelled as two inde
 
 Single-module Maven project, package root `ua.com.javarush.j4`, organised by responsibility:
 
-- `Main` — entry point; delegates to the picocli CLI and never propagates exceptions.
-- `cli/` — `CryptoCli` (picocli `@Command`); parses the legacy `-e/-d/-b`, `-k`, `-f` contract plus additive `--cipher`, `--keyword`, `--alphabet` flags.
-- `app/` — `CryptoService` facade + `command/` (Template-Method `CryptoCommand`: Encrypt/Decrypt/BruteForce).
-- `cipher/` — `Cipher` strategy + Caesar/ROT13/Atbash/Vigenère + `CipherFactory`.
-- `alphabet/` — `Alphabet`/`CharacterRing` value objects + `Alphabets` registry (EN/UA/RU + composite default).
-- `crack/` — `Cracker`/`CaesarCracker`, pluggable `FitnessScorer` (dictionary + frequency), `LanguageDetector`/`LanguageProfile`.
-- `io/` — `TextReader` strategies (txt/md/gz) + `TextReaders` registry, `TextWriter`, `OutputNaming`.
+- `Composition` — the composition root; the only place that wires the object graph.
+- `Main` — entry point; `new Composition().cli().run(args)`; never propagates exceptions.
+- `cli/` — `CryptoCli` (picocli), constructor-injected with `CryptoService`.
+- `app/` — `CryptoService` facade (constructor-injected) + `command/` (Template-Method commands) + `CryptoRequest`/`CipherSpec`.
+- `cipher/` — `Cipher` strategy + Caesar/ROT13/Atbash/Vigenère + `CipherCatalog` registry + `CipherSpec`.
+- `alphabet/` — `Alphabet`/`CharacterRing` value objects + `Alphabets` (registry; rings shared with `Language`).
+- `crack/` — `Cracker`/`CaesarCracker`, `FitnessScorer` (+ `ScorerCatalog`), `LanguageDetector`, `Language`/`Languages`.
+- `io/` — `TextReader` strategies (txt/md/gz/pdf) + `TextReaders`, `TextWriter` interface + `FileTextWriter`, `OutputNaming`.
 - `error/` — `CryptanalysisException` hierarchy.
 
 `MainTest` remains the authoritative externally-observable contract; the package layout above is the internal design that satisfies it.
