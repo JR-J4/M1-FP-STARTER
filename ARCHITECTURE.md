@@ -66,7 +66,7 @@ their own ring sizes. This is pinned by `MainTest$EncryptEdgeCases` and the
 `cipher/Cipher.java` is just `String encrypt(String)` / `String decrypt(String)`.
 Key (Caesar) and keyword (Vigenère) are bound at **construction**, so all four
 ciphers share one uniform Strategy interface with no key parameter leaking into
-the signature. `CipherFactory` is the only place that knows how to assemble a
+the signature. `CipherCatalog` is the only place that knows how to assemble a
 configured cipher from a name + key/keyword + alphabet.
 
 **Invariant:** `decrypt` is the exact inverse of `encrypt` for the same
@@ -103,20 +103,25 @@ handler. Both print and return a non-zero code.
 **Invariant:** `Main.main` never throws for bad input. The "key required for
 caesar `-e`/`-d`, absent for `-b`" rule cannot be expressed by picocli
 annotations alone — it is validated downstream before any write
-(`CipherFactory` rejects a null Caesar key).
+(`CipherCatalog` rejects a null Caesar key).
 
-## 6. `CryptoRequest.alphabetName` is overloaded by design
+## 6. Language/alphabet selection is split cleanly per operation
 
-`app/CryptoService.java`.
+`app/CryptoService.java`, `crack/Languages.java`.
 
-The same field drives two things depending on the operation:
+The CLI's `-a/--alphabet` flows into `CryptoRequest.languageCode` and is resolved
+through one resolver, `Languages.byCode(code)` (returns `Optional<Language>`):
 
-- encrypt/decrypt → `Alphabets.byName(alphabetName)` selects the cipher alphabet.
-- brute-force → `forcedProfile(alphabetName)`: `en`/`ua`/`ru` force that
-  language profile; `default`/`auto` (and anything else) → `null` → auto-detect.
+- encrypt/decrypt → the cipher alphabet is
+  `Languages.byCode(code).map(Language::alphabet).orElse(Alphabets.DEFAULT)` — a
+  named language uses its own alphabet; `default`/`auto` use the EN+UA composite.
+- brute-force → the forced language is `Languages.byCode(code).orElse(null)`;
+  `null` (from `default`/`auto`) means auto-detect, while `en`/`ua`/`ru` force
+  that language's scoring.
 
-**Know this** before adding a flag: the CLI surfaces it as `-a/--alphabet`, but
-for brute-force it means "language to score against," not "alphabet to shift."
+The cipher choice itself travels separately in `CipherSpec` (name + key +
+keyword), eliminating the old dual-purpose field that mixed alphabet selection
+with language scoring into a single string.
 
 ## 7. Wiring is centralized in one composition root
 
