@@ -7,7 +7,8 @@ import ua.com.javarush.j4.app.command.CryptoCommand;
 import ua.com.javarush.j4.app.command.DecryptCommand;
 import ua.com.javarush.j4.app.command.EncryptCommand;
 import ua.com.javarush.j4.cipher.Cipher;
-import ua.com.javarush.j4.cipher.CipherFactory;
+import ua.com.javarush.j4.cipher.CipherCatalog;
+import ua.com.javarush.j4.cipher.CipherSpec;
 import ua.com.javarush.j4.crack.Language;
 import ua.com.javarush.j4.crack.LanguageDetector;
 import ua.com.javarush.j4.crack.Languages;
@@ -24,7 +25,7 @@ public final class CryptoService {
     private final TextReaders readers = new TextReaders();
     private final TextWriter writer = new TextWriter();
     private final OutputNaming naming = new OutputNaming();
-    private final CipherFactory ciphers = new CipherFactory();
+    private final CipherCatalog ciphers = CipherCatalog.withDefaults();
     private final LanguageDetector detector = new LanguageDetector();
 
     public Path execute(CryptoRequest request) throws IOException {
@@ -44,7 +45,8 @@ public final class CryptoService {
 
     private Cipher cipher(CryptoRequest request) {
         Alphabet alphabet = Alphabets.byName(request.alphabetName());
-        return ciphers.create(request.cipherName(), alphabet, request.key(), request.keyword());
+        return ciphers.create(
+                new CipherSpec(request.cipherName(), request.key(), request.keyword()), alphabet);
     }
 
     /** For brute force: a named language forces its profile; "default"/"auto" means auto-detect. */

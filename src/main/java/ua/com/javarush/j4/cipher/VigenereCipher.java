@@ -12,6 +12,12 @@ public final class VigenereCipher implements Cipher {
         if (keyword == null || keyword.isBlank()) {
             throw new InvalidArgumentsException("Vigenère cipher requires a non-empty --keyword");
         }
+        for (int i = 0; i < keyword.length(); i++) {
+            if (alphabet.position(keyword.charAt(i)).isEmpty()) {
+                throw new InvalidArgumentsException(
+                        "Vigenère keyword must contain only alphabet letters: '" + keyword + "'");
+            }
+        }
         this.alphabet = alphabet;
         this.keyword = keyword;
     }
