@@ -53,8 +53,8 @@ public final class CryptoCli implements Callable<Integer> {
             description = "Alphabet/language: en, ua, ru, auto")
     private String alphabet;
 
-    @Option(names = {"-s", "--scorer"}, defaultValue = "dictionary",
-            description = "Brute-force fitness scorer: dictionary, frequency")
+    @Option(names = {"-s", "--scorer"}, defaultValue = "combined",
+            description = "Brute-force fitness scorer: dictionary, frequency, combined")
     private String scorer;
 
     @Override

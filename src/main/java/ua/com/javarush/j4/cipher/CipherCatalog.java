@@ -37,6 +37,7 @@ public final class CipherCatalog {
         catalog.register("rot13", (alphabet, key, keyword) -> new Rot13Cipher(alphabet));
         catalog.register("atbash", (alphabet, key, keyword) -> new AtbashCipher(alphabet));
         catalog.register("vigenere", (alphabet, key, keyword) -> new VigenereCipher(alphabet, keyword));
+        catalog.register("asd", (alphabet, key, keyword) -> new AsdCypher(alphabet, keyword));
         return catalog;
     }
 

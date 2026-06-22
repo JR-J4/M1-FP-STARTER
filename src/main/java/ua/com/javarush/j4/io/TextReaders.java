@@ -3,6 +3,10 @@ package ua.com.javarush.j4.io;
 import java.nio.file.Path;
 import java.util.List;
 
+// C:\Users\foo\bar
+
+// var/asd/asdasd/
+
 /** Picks the right reader for a path by extension; falls back to plain text. */
 public final class TextReaders {
     private final List<TextReader> readers;

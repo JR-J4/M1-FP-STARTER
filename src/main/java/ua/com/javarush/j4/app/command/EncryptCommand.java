@@ -15,6 +15,7 @@ public final class EncryptCommand extends CryptoCommand {
         this.cipher = cipher;
     }
 
+
     @Override
     protected String transform(String text) {
         return cipher.encrypt(text);

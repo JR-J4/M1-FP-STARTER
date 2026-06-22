@@ -6,6 +6,7 @@ import ua.com.javarush.j4.io.TextReaders;
 import ua.com.javarush.j4.io.TextWriter;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.file.Path;
 
 /** Template Method: read → transform → name → write. Subclasses supply the two varying steps. */
@@ -15,7 +16,7 @@ public abstract class CryptoCommand {
     private final TextWriter writer;
     private final OutputNaming naming;
 
-    protected CryptoCommand(Path input, TextReaders readers, TextWriter writer, OutputNaming naming) {
+    protected CryptoCommand(Path input, TextReaders readers, TextWriter writer, OutputNaming naming) throws IOException {
         this.input = input;
         this.readers = readers;
         this.writer = writer;

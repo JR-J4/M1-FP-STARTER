@@ -3,6 +3,7 @@ package ua.com.javarush.j4.crack;
 import ua.com.javarush.j4.error.InvalidArgumentsException;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
@@ -29,6 +30,10 @@ public final class ScorerCatalog {
         ScorerCatalog catalog = new ScorerCatalog();
         catalog.register("dictionary", DictionaryScorer::new);
         catalog.register("frequency", FrequencyScorer::new);
+        catalog.register("combined", lang ->
+                new CompositeFitnessScorer(List.of(
+                        new DictionaryScorer(lang),
+                        new FrequencyScorer(lang))));
         return catalog;
     }
 }
