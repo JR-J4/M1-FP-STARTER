@@ -12,9 +12,13 @@ public final class TextReaders {
     private final List<TextReader> readers;
     private final TextReader plain;
 
-    public TextReaders(List<TextReader> readers) {
+    // List<? extends TextReader>: "producer extends" (PECS). We only read from this
+    // list, so accept a list of any subtype, e.g. a List<PlainTextReader>.
+    public TextReaders(List<? extends TextReader> readers) {
         this.readers = List.copyOf(readers);
-        this.plain = readers.stream()
+        // Derive from the copied field (a plain List<TextReader>), not the wildcard
+        // parameter, so the PlainTextReader::new fallback unifies cleanly.
+        this.plain = this.readers.stream()
                 .filter(r -> r instanceof PlainTextReader)
                 .findFirst()
                 .orElseGet(PlainTextReader::new);

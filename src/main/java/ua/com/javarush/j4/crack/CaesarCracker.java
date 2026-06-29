@@ -2,6 +2,10 @@ package ua.com.javarush.j4.crack;
 
 import ua.com.javarush.j4.alphabet.Alphabet;
 import ua.com.javarush.j4.cipher.CaesarCipher;
+import ua.com.javarush.j4.support.Scored;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /** Sweeps every Caesar shift and returns the decryption the scorer likes best. */
 public final class CaesarCracker implements Cracker {
@@ -16,19 +20,11 @@ public final class CaesarCracker implements Cracker {
     @Override
     public CrackResult crack(String ciphertext) {
         int keyspace = alphabet.keyspaceSize();
-        int bestKey = 0;
-        String bestText = ciphertext;
-        double bestScore = Double.NEGATIVE_INFINITY;
-
+        List<CrackResult> candidates = new ArrayList<>(keyspace);
         for (int key = 0; key < keyspace; key++) {
-            String candidate = new CaesarCipher(alphabet, key).decrypt(ciphertext);
-            double score = scorer.score(candidate);
-            if (score > bestScore) {
-                bestScore = score;
-                bestKey = key;
-                bestText = candidate;
-            }
+            candidates.add(new CrackResult(key, new CaesarCipher(alphabet, key).decrypt(ciphertext)));
         }
-        return new CrackResult(bestKey, bestText);
+        // The generic Scored.bestOf owns the "pick the highest score" logic; here T = CrackResult.
+        return Scored.bestOf(candidates, candidate -> scorer.score(candidate.plaintext())).value();
     }
 }

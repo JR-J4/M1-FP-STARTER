@@ -17,7 +17,9 @@ public final class CompositeFitnessScorer implements FitnessScorer, Iterable<Fit
 
     private final List<FitnessScorer> scorers;
 
-    public CompositeFitnessScorer(List<FitnessScorer> scorers) {
+    // List<? extends FitnessScorer>: we only consume scores out of these, so a list of
+    // any FitnessScorer subtype is accepted ("producer extends", PECS).
+    public CompositeFitnessScorer(List<? extends FitnessScorer> scorers) {
         if (scorers.isEmpty()) {
             throw new IllegalArgumentException("At least one scorer is required");
         }

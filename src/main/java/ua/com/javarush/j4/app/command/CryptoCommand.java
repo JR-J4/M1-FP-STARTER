@@ -16,7 +16,7 @@ public abstract class CryptoCommand {
     private final TextWriter writer;
     private final OutputNaming naming;
 
-    protected CryptoCommand(Path input, TextReaders readers, TextWriter writer, OutputNaming naming) throws IOException {
+    protected CryptoCommand(Path input, TextReaders readers, TextWriter writer, OutputNaming naming) {
         this.input = input;
         this.readers = readers;
         this.writer = writer;

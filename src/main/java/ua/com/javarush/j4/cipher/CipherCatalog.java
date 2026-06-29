@@ -2,10 +2,7 @@ package ua.com.javarush.j4.cipher;
 
 import ua.com.javarush.j4.alphabet.Alphabet;
 import ua.com.javarush.j4.error.InvalidArgumentsException;
-
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
+import ua.com.javarush.j4.support.NamedRegistry;
 
 /** Registry of named cipher creators. Replaces the old switch-based factory. */
 public final class CipherCatalog {
@@ -16,18 +13,15 @@ public final class CipherCatalog {
         Cipher create(Alphabet alphabet, Integer key, String keyword);
     }
 
-    private final Map<String, CipherCreator> creators = new HashMap<>();
+    /** The generic registry supplies all the name → value plumbing; T is CipherCreator here. */
+    private final NamedRegistry<CipherCreator> creators = new NamedRegistry<>("cipher");
 
     public void register(String name, CipherCreator creator) {
-        creators.put(name.toLowerCase(Locale.ROOT), creator);
+        creators.register(name, creator);
     }
 
     public Cipher create(CipherSpec spec, Alphabet alphabet) {
-        CipherCreator creator = creators.get(spec.cipherName().toLowerCase(Locale.ROOT));
-        if (creator == null) {
-            throw new InvalidArgumentsException("Unknown cipher: " + spec.cipherName());
-        }
-        return creator.create(alphabet, spec.key(), spec.keyword());
+        return creators.get(spec.cipherName()).create(alphabet, spec.key(), spec.keyword());
     }
 
     /** The built-in cipher set. */
