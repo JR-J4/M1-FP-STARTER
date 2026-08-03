@@ -4,7 +4,7 @@ import ua.com.javarush.j4.alphabet.Alphabet;
 import ua.com.javarush.j4.error.InvalidArgumentsException;
 
 /** Polyalphabetic cipher: each enciphered letter is shifted by the next keyword letter. */
-public final class VigenereCipher implements Cipher {
+public final class VigenereCipher implements Cipher, PositionDependentCipher {
     private final Alphabet alphabet;
     private final String keyword;
 
@@ -18,17 +18,38 @@ public final class VigenereCipher implements Cipher {
 
     @Override
     public String encrypt(String text) {
-        return process(text, 1);
+        return process(text, 1, 0);
     }
 
     @Override
     public String decrypt(String text) {
-        return process(text, -1);
+        return process(text, -1, 0);
     }
 
-    private String process(String text, int sign) {
+    @Override
+    public String encryptFrom(String chunk, int letterOffset) {
+        return process(chunk, 1, letterOffset);
+    }
+
+    @Override
+    public String decryptFrom(String chunk, int letterOffset) {
+        return process(chunk, -1, letterOffset);
+    }
+
+    @Override
+    public int alphabetLetterCount(String chunk) {
+        int count = 0;
+        for (int i = 0; i < chunk.length(); i++) {
+            if (alphabet.position(chunk.charAt(i)).isPresent()) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private String process(String text, int sign, int startLetterIndex) {
         StringBuilder out = new StringBuilder(text.length());
-        int keyIndex = 0;
+        int keyIndex = startLetterIndex;
         for (int i = 0; i < text.length(); i++) {
             char c = text.charAt(i);
             if (alphabet.position(c).isPresent()) {
