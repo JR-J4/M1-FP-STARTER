@@ -26,8 +26,8 @@
 |---|---|
 | `TaskExecutor.java` | Interface: run tasks, return results in submission order |
 | `DirectTaskExecutor.java` | Same-thread implementation |
-| `ForkJoinTaskExecutor.java` | `ForkJoinPool`-backed implementation |
-| `LazyForkJoinTaskExecutor.java` | Defers pool creation to first use |
+| `PooledTaskExecutor.java` | `ForkJoinPool`-backed implementation |
+| `LazyPooledTaskExecutor.java` | Defers pool creation to first use |
 | `ParallelPolicy.java` | Thread count + the three size thresholds |
 
 **New package `ua.com.javarush.j4.app.batch`** — multi-file processing:
@@ -110,8 +110,8 @@ git commit -m "fix: restore CLI delegation in Main"
 - Create: `src/main/java/ua/com/javarush/j4/error/ConcurrentExecutionException.java`
 - Create: `src/main/java/ua/com/javarush/j4/concurrent/TaskExecutor.java`
 - Create: `src/main/java/ua/com/javarush/j4/concurrent/DirectTaskExecutor.java`
-- Create: `src/main/java/ua/com/javarush/j4/concurrent/ForkJoinTaskExecutor.java`
-- Create: `src/main/java/ua/com/javarush/j4/concurrent/LazyForkJoinTaskExecutor.java`
+- Create: `src/main/java/ua/com/javarush/j4/concurrent/PooledTaskExecutor.java`
+- Create: `src/main/java/ua/com/javarush/j4/concurrent/LazyPooledTaskExecutor.java`
 - Test: `src/test/java/ua/com/javarush/j4/concurrent/TaskExecutorTest.java`
 
 **Interfaces:**
@@ -119,8 +119,8 @@ git commit -m "fix: restore CLI delegation in Main"
 - Produces:
   - `interface TaskExecutor extends AutoCloseable` with `<T> List<T> invokeAll(List<? extends Callable<T>> tasks)`, `int parallelism()`, `void close()`
   - `class DirectTaskExecutor implements TaskExecutor` — no-arg constructor
-  - `class ForkJoinTaskExecutor implements TaskExecutor` — `ForkJoinTaskExecutor(int parallelism)`
-  - `class LazyForkJoinTaskExecutor implements TaskExecutor` — `LazyForkJoinTaskExecutor(int parallelism)`, package-private `boolean poolStarted()`
+  - `class PooledTaskExecutor implements TaskExecutor` — `PooledTaskExecutor(int parallelism)`
+  - `class LazyPooledTaskExecutor implements TaskExecutor` — `LazyPooledTaskExecutor(int parallelism)`, package-private `boolean poolStarted()`
   - `class ConcurrentExecutionException extends CryptanalysisException`
 
 - [ ] **Step 1: Write the failing test**
@@ -197,12 +197,12 @@ class TaskExecutorTest {
     }
 
     @Nested
-    @DisplayName("ForkJoinTaskExecutor")
+    @DisplayName("PooledTaskExecutor")
     class ForkJoin {
 
         @Test
         void returnsResultsInSubmissionOrderNotCompletionOrder() {
-            try (ForkJoinTaskExecutor executor = new ForkJoinTaskExecutor(4)) {
+            try (PooledTaskExecutor executor = new PooledTaskExecutor(4)) {
                 assertEquals(IntStream.range(0, 8).boxed().toList(),
                         executor.invokeAll(scrambledTasks(8)));
             }
@@ -210,7 +210,7 @@ class TaskExecutorTest {
 
         @Test
         void actuallyUsesMoreThanOneThread() {
-            try (ForkJoinTaskExecutor executor = new ForkJoinTaskExecutor(4)) {
+            try (PooledTaskExecutor executor = new PooledTaskExecutor(4)) {
                 List<Long> ids = executor.invokeAll(scrambledTasks(8).stream()
                         .map(task -> (Callable<Long>) () -> {
                             task.call();
@@ -226,7 +226,7 @@ class TaskExecutorTest {
         @Test
         void wrapsTaskFailurePreservingCause() {
             IllegalStateException boom = new IllegalStateException("boom");
-            try (ForkJoinTaskExecutor executor = new ForkJoinTaskExecutor(2)) {
+            try (PooledTaskExecutor executor = new PooledTaskExecutor(2)) {
                 ConcurrentExecutionException thrown = assertThrows(ConcurrentExecutionException.class,
                         () -> executor.invokeAll(List.<Callable<Integer>>of(
                                 () -> 1,
@@ -238,7 +238,7 @@ class TaskExecutorTest {
 
         @Test
         void reportsFirstFailureInSubmissionOrder() {
-            try (ForkJoinTaskExecutor executor = new ForkJoinTaskExecutor(4)) {
+            try (PooledTaskExecutor executor = new PooledTaskExecutor(4)) {
                 ConcurrentExecutionException thrown = assertThrows(ConcurrentExecutionException.class,
                         () -> executor.invokeAll(List.<Callable<Integer>>of(
                                 () -> { throw new IllegalStateException("first"); },
@@ -250,12 +250,12 @@ class TaskExecutorTest {
     }
 
     @Nested
-    @DisplayName("LazyForkJoinTaskExecutor")
+    @DisplayName("LazyPooledTaskExecutor")
     class Lazy {
 
         @Test
         void answersParallelismWithoutStartingAPool() {
-            LazyForkJoinTaskExecutor executor = new LazyForkJoinTaskExecutor(4);
+            LazyPooledTaskExecutor executor = new LazyPooledTaskExecutor(4);
             try {
                 assertEquals(4, executor.parallelism());
                 assertFalse(executor.poolStarted(), "asking for parallelism must not start threads");
@@ -266,7 +266,7 @@ class TaskExecutorTest {
 
         @Test
         void startsThePoolOnFirstUse() {
-            LazyForkJoinTaskExecutor executor = new LazyForkJoinTaskExecutor(4);
+            LazyPooledTaskExecutor executor = new LazyPooledTaskExecutor(4);
             try {
                 assertEquals(List.of(0, 1, 2, 3), executor.invokeAll(scrambledTasks(4)));
                 assertTrue(executor.poolStarted());
@@ -277,7 +277,7 @@ class TaskExecutorTest {
 
         @Test
         void closeIsSafeWhenNeverUsed() {
-            LazyForkJoinTaskExecutor executor = new LazyForkJoinTaskExecutor(4);
+            LazyPooledTaskExecutor executor = new LazyPooledTaskExecutor(4);
             executor.close();
             assertFalse(executor.poolStarted());
         }
@@ -385,7 +385,7 @@ public final class DirectTaskExecutor implements TaskExecutor {
 }
 ```
 
-- [ ] **Step 6: Create `ForkJoinTaskExecutor`**
+- [ ] **Step 6: Create `PooledTaskExecutor`**
 
 Note it awaits *every* future before throwing, so a failure never leaves tasks running behind it.
 
@@ -403,13 +403,13 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /** Runs tasks on a dedicated {@link ForkJoinPool} sized at construction. */
-public final class ForkJoinTaskExecutor implements TaskExecutor {
+public final class PooledTaskExecutor implements TaskExecutor {
     private static final int SHUTDOWN_TIMEOUT_SECONDS = 10;
 
     private final ForkJoinPool pool;
     private final int parallelism;
 
-    public ForkJoinTaskExecutor(int parallelism) {
+    public PooledTaskExecutor(int parallelism) {
         this.parallelism = Math.max(1, parallelism);
         this.pool = new ForkJoinPool(this.parallelism);
     }
@@ -467,7 +467,7 @@ public final class ForkJoinTaskExecutor implements TaskExecutor {
 }
 ```
 
-- [ ] **Step 7: Create `LazyForkJoinTaskExecutor`**
+- [ ] **Step 7: Create `LazyPooledTaskExecutor`**
 
 ```java
 package ua.com.javarush.j4.concurrent;
@@ -482,11 +482,11 @@ import java.util.concurrent.Callable;
  * work. Wrapping the pool in this class means a run over small inputs — which is every
  * run the test suite makes — never starts a thread at all.
  */
-public final class LazyForkJoinTaskExecutor implements TaskExecutor {
+public final class LazyPooledTaskExecutor implements TaskExecutor {
     private final int parallelism;
-    private ForkJoinTaskExecutor delegate;
+    private PooledTaskExecutor delegate;
 
-    public LazyForkJoinTaskExecutor(int parallelism) {
+    public LazyPooledTaskExecutor(int parallelism) {
         this.parallelism = Math.max(1, parallelism);
     }
 
@@ -508,9 +508,9 @@ public final class LazyForkJoinTaskExecutor implements TaskExecutor {
         }
     }
 
-    private synchronized ForkJoinTaskExecutor pool() {
+    private synchronized PooledTaskExecutor pool() {
         if (delegate == null) {
-            delegate = new ForkJoinTaskExecutor(parallelism);
+            delegate = new PooledTaskExecutor(parallelism);
         }
         return delegate;
     }
@@ -711,7 +711,7 @@ import ua.com.javarush.j4.alphabet.Alphabet;
 import ua.com.javarush.j4.alphabet.Alphabets;
 import ua.com.javarush.j4.cipher.CaesarCipher;
 import ua.com.javarush.j4.concurrent.DirectTaskExecutor;
-import ua.com.javarush.j4.concurrent.ForkJoinTaskExecutor;
+import ua.com.javarush.j4.concurrent.PooledTaskExecutor;
 import ua.com.javarush.j4.concurrent.ParallelPolicy;
 import ua.com.javarush.j4.concurrent.TaskExecutor;
 
@@ -745,7 +745,7 @@ class ParallelCaesarCrackerTest {
     @Test
     void matchesTheSequentialCrackerForEveryKey() {
         String plaintext = longEnglishText();
-        try (TaskExecutor executor = new ForkJoinTaskExecutor(4)) {
+        try (TaskExecutor executor = new PooledTaskExecutor(4)) {
             Cracker sequential = new CaesarCracker(EN, new DictionaryScorer(PROFILE));
             Cracker parallel = new ParallelCaesarCracker(
                     EN, new DictionaryScorer(PROFILE), executor, ParallelPolicy.of(4));
@@ -761,7 +761,7 @@ class ParallelCaesarCrackerTest {
     @Test
     void matchesTheSequentialCrackerOnRandomTexts() {
         Random random = new Random(20260803L);
-        try (TaskExecutor executor = new ForkJoinTaskExecutor(4)) {
+        try (TaskExecutor executor = new PooledTaskExecutor(4)) {
             Cracker sequential = new CaesarCracker(EN, new FrequencyScorer(PROFILE));
             Cracker parallel = new ParallelCaesarCracker(
                     EN, new FrequencyScorer(PROFILE), executor, ParallelPolicy.of(4));
@@ -781,7 +781,7 @@ class ParallelCaesarCrackerTest {
         // key 0, and the parallel reduction must reach the same answer.
         FitnessScorer flat = text -> 1.0;
         String ciphertext = longEnglishText();
-        try (TaskExecutor executor = new ForkJoinTaskExecutor(4)) {
+        try (TaskExecutor executor = new PooledTaskExecutor(4)) {
             Cracker parallel = new ParallelCaesarCracker(EN, flat, executor, ParallelPolicy.of(4));
 
             assertEquals(0, parallel.crack(ciphertext).key());
@@ -791,7 +791,7 @@ class ParallelCaesarCrackerTest {
     @Test
     void isStableAcrossRepeatedRuns() {
         String ciphertext = new CaesarCipher(EN, 7).encrypt(longEnglishText());
-        try (TaskExecutor executor = new ForkJoinTaskExecutor(4)) {
+        try (TaskExecutor executor = new PooledTaskExecutor(4)) {
             Cracker parallel = new ParallelCaesarCracker(
                     EN, new DictionaryScorer(PROFILE), executor, ParallelPolicy.of(4));
             CrackResult first = parallel.crack(ciphertext);
@@ -805,7 +805,7 @@ class ParallelCaesarCrackerTest {
     @Test
     void fallsBackToSequentialBelowTheThreshold() {
         String shortText = new CaesarCipher(EN, 3).encrypt("the quick brown fox");
-        try (TaskExecutor executor = new ForkJoinTaskExecutor(4)) {
+        try (TaskExecutor executor = new PooledTaskExecutor(4)) {
             Cracker sequential = new CaesarCracker(EN, new DictionaryScorer(PROFILE));
             Cracker parallel = new ParallelCaesarCracker(
                     EN, new DictionaryScorer(PROFILE), executor, ParallelPolicy.of(4));
@@ -829,7 +829,7 @@ class ParallelCaesarCrackerTest {
     @Test
     void handlesMorePartitionsThanKeys() {
         String ciphertext = new CaesarCipher(EN, 5).encrypt(longEnglishText());
-        try (TaskExecutor executor = new ForkJoinTaskExecutor(64)) {
+        try (TaskExecutor executor = new PooledTaskExecutor(64)) {
             Cracker sequential = new CaesarCracker(EN, new DictionaryScorer(PROFILE));
             Cracker parallel = new ParallelCaesarCracker(
                     EN, new DictionaryScorer(PROFILE), executor, ParallelPolicy.of(64));
@@ -1167,7 +1167,7 @@ import org.junit.jupiter.api.Test;
 import ua.com.javarush.j4.alphabet.Alphabet;
 import ua.com.javarush.j4.alphabet.Alphabets;
 import ua.com.javarush.j4.concurrent.DirectTaskExecutor;
-import ua.com.javarush.j4.concurrent.ForkJoinTaskExecutor;
+import ua.com.javarush.j4.concurrent.PooledTaskExecutor;
 import ua.com.javarush.j4.concurrent.ParallelPolicy;
 import ua.com.javarush.j4.concurrent.TaskExecutor;
 
@@ -1201,7 +1201,7 @@ class ParallelCipherTest {
     @Test
     void matchesTheDelegateForEveryCipher() {
         String text = largeText(ParallelPolicy.MIN_CHARS_FOR_TRANSFORM * 3);
-        try (TaskExecutor executor = new ForkJoinTaskExecutor(4)) {
+        try (TaskExecutor executor = new PooledTaskExecutor(4)) {
             for (Cipher delegate : allCiphers()) {
                 Cipher parallel = new ParallelCipher(delegate, executor, ParallelPolicy.of(4));
 
@@ -1216,7 +1216,7 @@ class ParallelCipherTest {
     @Test
     void roundTripsThroughTheParallelPath() {
         String text = largeText(ParallelPolicy.MIN_CHARS_FOR_TRANSFORM * 2);
-        try (TaskExecutor executor = new ForkJoinTaskExecutor(4)) {
+        try (TaskExecutor executor = new PooledTaskExecutor(4)) {
             for (Cipher delegate : allCiphers()) {
                 Cipher parallel = new ParallelCipher(delegate, executor, ParallelPolicy.of(4));
 
@@ -1228,7 +1228,7 @@ class ParallelCipherTest {
 
     @Test
     void handlesTextsThatAreNotAWholeNumberOfChunks() {
-        try (TaskExecutor executor = new ForkJoinTaskExecutor(4)) {
+        try (TaskExecutor executor = new PooledTaskExecutor(4)) {
             Cipher delegate = new VigenereCipher(EN, "lemon");
             Cipher parallel = new ParallelCipher(delegate, executor, ParallelPolicy.of(4));
 
@@ -1242,7 +1242,7 @@ class ParallelCipherTest {
     @Test
     void delegatesDirectlyBelowTheThreshold() {
         String small = "the quick brown fox";
-        try (TaskExecutor executor = new ForkJoinTaskExecutor(4)) {
+        try (TaskExecutor executor = new PooledTaskExecutor(4)) {
             Cipher delegate = new CaesarCipher(EN, 3);
             Cipher parallel = new ParallelCipher(delegate, executor, ParallelPolicy.of(4));
 
@@ -1272,7 +1272,7 @@ class ParallelCipherTest {
         }
         String withEmoji = text.toString();
 
-        try (TaskExecutor executor = new ForkJoinTaskExecutor(4)) {
+        try (TaskExecutor executor = new PooledTaskExecutor(4)) {
             Cipher delegate = new CaesarCipher(EN, 5);
             Cipher parallel = new ParallelCipher(delegate, executor, ParallelPolicy.of(4));
 
@@ -1283,7 +1283,7 @@ class ParallelCipherTest {
     @Test
     void isStableAcrossRepeatedRuns() {
         String text = largeText(ParallelPolicy.MIN_CHARS_FOR_TRANSFORM * 2);
-        try (TaskExecutor executor = new ForkJoinTaskExecutor(4)) {
+        try (TaskExecutor executor = new PooledTaskExecutor(4)) {
             Cipher parallel = new ParallelCipher(
                     new VigenereCipher(MIXED, "ключ"), executor, ParallelPolicy.of(4));
             String first = parallel.encrypt(text);
@@ -1443,7 +1443,7 @@ git commit -m "feat: add chunking ParallelCipher decorator"
 - Test: `src/test/java/ua/com/javarush/j4/app/CryptoServiceThreadingTest.java`
 
 **Interfaces:**
-- Consumes: `ParallelCaesarCracker`, `ParallelCipher`, `ParallelPolicy`, `LazyForkJoinTaskExecutor`, `DirectTaskExecutor`
+- Consumes: `ParallelCaesarCracker`, `ParallelCipher`, `ParallelPolicy`, `LazyPooledTaskExecutor`, `DirectTaskExecutor`
 - Produces:
   - `CryptoService implements AutoCloseable`, `CryptoService()` (all cores), `CryptoService(ParallelPolicy)`
   - `BruteForceCommand(Path, LanguageDetector, LanguageProfile, String, TextReaders, TextWriter, OutputNaming, TaskExecutor, ParallelPolicy)`
@@ -1621,7 +1621,7 @@ import ua.com.javarush.j4.cipher.Cipher;
 import ua.com.javarush.j4.cipher.CipherFactory;
 import ua.com.javarush.j4.cipher.ParallelCipher;
 import ua.com.javarush.j4.concurrent.DirectTaskExecutor;
-import ua.com.javarush.j4.concurrent.LazyForkJoinTaskExecutor;
+import ua.com.javarush.j4.concurrent.LazyPooledTaskExecutor;
 import ua.com.javarush.j4.concurrent.ParallelPolicy;
 import ua.com.javarush.j4.concurrent.TaskExecutor;
 import ua.com.javarush.j4.crack.LanguageDetector;
@@ -1661,7 +1661,7 @@ public final class CryptoService implements AutoCloseable {
     public CryptoService(ParallelPolicy policy) {
         this.policy = policy;
         this.executor = policy.threads() > 1
-                ? new LazyForkJoinTaskExecutor(policy.threads())
+                ? new LazyPooledTaskExecutor(policy.threads())
                 : new DirectTaskExecutor();
     }
 
@@ -1781,7 +1781,7 @@ import ua.com.javarush.j4.app.command.CryptoCommand;
 import ua.com.javarush.j4.cipher.CaesarCipher;
 import ua.com.javarush.j4.alphabet.Alphabets;
 import ua.com.javarush.j4.app.command.EncryptCommand;
-import ua.com.javarush.j4.concurrent.ForkJoinTaskExecutor;
+import ua.com.javarush.j4.concurrent.PooledTaskExecutor;
 import ua.com.javarush.j4.concurrent.TaskExecutor;
 import ua.com.javarush.j4.io.OutputNaming;
 import ua.com.javarush.j4.io.TextReaders;
@@ -1814,7 +1814,7 @@ class BatchProcessorTest {
             inputs.add(file);
         }
 
-        try (TaskExecutor executor = new ForkJoinTaskExecutor(4)) {
+        try (TaskExecutor executor = new PooledTaskExecutor(4)) {
             BatchReport report = new BatchProcessor(executor)
                     .process(inputs, BatchProcessorTest::encryptCommand);
 
@@ -1834,7 +1834,7 @@ class BatchProcessorTest {
         Files.writeString(alsoGood, "world", StandardCharsets.UTF_8);
 
         List<Path> inputs = List.of(good, missing, alsoGood);
-        try (TaskExecutor executor = new ForkJoinTaskExecutor(4)) {
+        try (TaskExecutor executor = new PooledTaskExecutor(4)) {
             BatchReport report = new BatchProcessor(executor)
                     .process(inputs, BatchProcessorTest::encryptCommand);
 
@@ -1853,7 +1853,7 @@ class BatchProcessorTest {
         Path input = dir.resolve("note.txt");
         Files.writeString(input, "abc", StandardCharsets.UTF_8);
 
-        try (TaskExecutor executor = new ForkJoinTaskExecutor(2)) {
+        try (TaskExecutor executor = new PooledTaskExecutor(2)) {
             BatchReport report = new BatchProcessor(executor)
                     .process(List.of(input), BatchProcessorTest::encryptCommand);
 
@@ -2227,7 +2227,7 @@ git commit -m "feat: add concurrent batch file processing with glob expansion"
 Add these two bullets to the existing package list, after the `io/` entry:
 
 ```markdown
-- `concurrent/` — `TaskExecutor` seam (`DirectTaskExecutor`, `ForkJoinTaskExecutor`, `LazyForkJoinTaskExecutor`) + `ParallelPolicy` thresholds.
+- `concurrent/` — `TaskExecutor` seam (`DirectTaskExecutor`, `PooledTaskExecutor`, `LazyPooledTaskExecutor`) + `ParallelPolicy` thresholds.
 - `app/batch/` — `BatchProcessor` + `BatchReport`/`FileOutcome` for concurrent multi-file runs.
 ```
 
@@ -2248,7 +2248,7 @@ Two rules keep this predictable:
 1. **Each component self-gates on input size** via `ParallelPolicy` and falls back to its
    sequential algorithm below threshold (8192 chars to crack, 65536 to chunk, 2 files to
    batch). The shipped test fixtures are all well under these, so `MainTest` always takes
-   the sequential path and `LazyForkJoinTaskExecutor` never starts a thread.
+   the sequential path and `LazyPooledTaskExecutor` never starts a thread.
 2. **Fan-out happens at exactly one level** — the outermost stage with enough work. Batch
    runs hand each file's command a `DirectTaskExecutor`, so inner cracking stays
    sequential and the pool is never oversubscribed.

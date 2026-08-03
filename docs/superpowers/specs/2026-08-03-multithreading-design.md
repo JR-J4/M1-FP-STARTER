@@ -24,7 +24,7 @@ step 0 and must produce a green baseline before any concurrency work begins.
 ### Constraints
 
 - **Java 17.** No virtual threads, no structured concurrency, no `ExecutorService`
-  implementing `AutoCloseable`. Plain `ExecutorService`/`ForkJoinPool`.
+  implementing `AutoCloseable`. Plain `ExecutorService`.
 - **`MainTest` is the authoritative contract** and must stay green and untouched.
 - **Test fixtures are tiny** — `hamlet.txt` is 838 B, `orwell.txt` is 4 KB, `test.txt`
   is 12 B. `MainTest` calls `Main.main(...)` fresh for each test.
@@ -73,8 +73,8 @@ Implementations:
 | Class | Behaviour |
 |---|---|
 | `DirectTaskExecutor` | Runs each task inline on the calling thread, in order. `parallelism()` is 1. `close()` is a no-op. |
-| `ForkJoinTaskExecutor` | Owns a `ForkJoinPool(n)`. `close()` shuts down and awaits termination. |
-| `LazyForkJoinTaskExecutor` | Delegates to a `ForkJoinTaskExecutor` created on first `invokeAll`. `parallelism()` answers from config without starting anything. `close()` is a no-op if never used. |
+| `PooledTaskExecutor` | Owns a fixed thread pool of `n` daemon threads. `close()` shuts down and awaits termination. |
+| `LazyPooledTaskExecutor` | Delegates to a `PooledTaskExecutor` created on first `invokeAll`. `parallelism()` answers from config without starting anything. `close()` is a no-op if never used. |
 
 The executor is injected at `CryptoService`, the composition root already established for
 `CipherFactory`, `TextReaders` and the rest. Concurrency becomes one more
@@ -100,7 +100,7 @@ Thresholds are measured in **characters** (`String.length()`), not bytes.
 | `ParallelCipher` | 65536 chars | Single pass; needs enough work to beat ~tens of µs of task handoff. |
 | `BatchProcessor` | 2 files | Trivially worth it. |
 
-Combined with `LazyForkJoinTaskExecutor`, a run over small inputs **never constructs a
+Combined with `LazyPooledTaskExecutor`, a run over small inputs **never constructs a
 thread pool at all**. All existing fixtures fall under every threshold, so the entire
 current test suite keeps taking the sequential path.
 
@@ -121,6 +121,17 @@ Batch workers block briefly in `Files.readString`/`writeString`. This is accepte
 compensated for: the CPU phase dominates and the idle window is negligible. Using
 `ForkJoinPool.ManagedBlocker` was considered and rejected as unnecessary complexity for a
 CLI that starts, does one job, and exits.
+
+### Why a fixed pool, not a `ForkJoinPool`
+
+*Revised during implementation of Task 1.* The original choice was `ForkJoinPool`, for
+work-stealing across nested joins. But the single-level fan-out rule above means this
+design never nests a join, so work-stealing has nothing to steal — while `ForkJoinTask`
+actively costs us exception fidelity: it reconstructs a failed task's exception in the
+calling thread (via a `Throwable`-taking constructor when one exists) rather than
+rethrowing the original, so `getCause()` returns a copy with a doubled message. A fixed
+pool preserves the original throwable identity. Workers are daemon threads, so a pool that
+somehow escapes `close()` cannot keep the JVM alive.
 
 ## Components
 
