@@ -1,0 +1,316 @@
+<mxGraphModel adaptiveColors="auto" dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1100" math="0" shadow="0">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+
+    <mxCell id="pkg_cli" value="cli" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;verticalAlign=top;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+      <mxGeometry x="440" y="140" width="200" height="100" as="geometry"/>
+    </mxCell>
+    <mxCell id="pkg_app" value="app  /  app.command" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;verticalAlign=top;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+      <mxGeometry x="160" y="300" width="540" height="260" as="geometry"/>
+    </mxCell>
+    <mxCell id="pkg_cipher" value="cipher" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;verticalAlign=top;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+      <mxGeometry x="760" y="300" width="260" height="320" as="geometry"/>
+    </mxCell>
+    <mxCell id="pkg_crack" value="crack" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;verticalAlign=top;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+      <mxGeometry x="1080" y="300" width="300" height="440" as="geometry"/>
+    </mxCell>
+    <mxCell id="pkg_io" value="io" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d4e1f5;strokeColor=#6c8ebf;verticalAlign=top;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+      <mxGeometry x="760" y="660" width="320" height="320" as="geometry"/>
+    </mxCell>
+    <mxCell id="pkg_alphabet" value="alphabet" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;verticalAlign=top;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+      <mxGeometry x="160" y="620" width="320" height="160" as="geometry"/>
+    </mxCell>
+    <mxCell id="pkg_support" value="support" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#999999;verticalAlign=top;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+      <mxGeometry x="520" y="620" width="220" height="120" as="geometry"/>
+    </mxCell>
+    <mxCell id="pkg_error" value="error" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ededed;strokeColor=#666666;verticalAlign=top;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+      <mxGeometry x="160" y="820" width="300" height="160" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="main" value="Main&#10;(entry point)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="200" y="40" width="150" height="50" as="geometry"/>
+    </mxCell>
+    <mxCell id="composition" value="Composition&#10;(composition root)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="420" y="40" width="190" height="50" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cli" value="CryptoCli&#10;(picocli)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;" vertex="1" parent="1">
+      <mxGeometry x="470" y="180" width="140" height="44" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="service" value="CryptoService&#10;(facade)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="180" y="336" width="160" height="44" as="geometry"/>
+    </mxCell>
+    <mxCell id="request" value="CryptoRequest" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="1">
+      <mxGeometry x="360" y="336" width="140" height="44" as="geometry"/>
+    </mxCell>
+    <mxCell id="operation" value="Operation&#10;(enum)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="1">
+      <mxGeometry x="520" y="336" width="140" height="44" as="geometry"/>
+    </mxCell>
+    <mxCell id="cmd_abstract" value="«abstract»&#10;CryptoCommand" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontStyle=2;" vertex="1" parent="1">
+      <mxGeometry x="180" y="500" width="160" height="44" as="geometry"/>
+    </mxCell>
+    <mxCell id="cmd_encrypt" value="EncryptCommand" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="1">
+      <mxGeometry x="180" y="430" width="160" height="34" as="geometry"/>
+    </mxCell>
+    <mxCell id="cmd_decrypt" value="DecryptCommand" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="1">
+      <mxGeometry x="360" y="430" width="150" height="34" as="geometry"/>
+    </mxCell>
+    <mxCell id="cmd_brute" value="BruteForceCommand" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="1">
+      <mxGeometry x="525" y="430" width="160" height="34" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cipher_iface" value="«interface»&#10;Cipher" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;fontStyle=2;" vertex="1" parent="1">
+      <mxGeometry x="790" y="336" width="200" height="40" as="geometry"/>
+    </mxCell>
+    <mxCell id="caesar" value="CaesarCipher" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;" vertex="1" parent="1">
+      <mxGeometry x="790" y="384" width="200" height="28" as="geometry"/>
+    </mxCell>
+    <mxCell id="rot13" value="Rot13Cipher" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;" vertex="1" parent="1">
+      <mxGeometry x="790" y="418" width="200" height="28" as="geometry"/>
+    </mxCell>
+    <mxCell id="atbash" value="AtbashCipher" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;" vertex="1" parent="1">
+      <mxGeometry x="790" y="452" width="200" height="28" as="geometry"/>
+    </mxCell>
+    <mxCell id="vigenere" value="VigenereCipher" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;" vertex="1" parent="1">
+      <mxGeometry x="790" y="486" width="200" height="28" as="geometry"/>
+    </mxCell>
+    <mxCell id="cipher_catalog" value="CipherCatalog&#10;(registry)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="790" y="524" width="200" height="38" as="geometry"/>
+    </mxCell>
+    <mxCell id="cipher_spec" value="CipherSpec" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;" vertex="1" parent="1">
+      <mxGeometry x="790" y="572" width="200" height="28" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cracker_iface" value="«interface»  Cracker" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#b85450;fontStyle=2;" vertex="1" parent="1">
+      <mxGeometry x="1100" y="336" width="260" height="32" as="geometry"/>
+    </mxCell>
+    <mxCell id="caesar_cracker" value="CaesarCracker" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#b85450;" vertex="1" parent="1">
+      <mxGeometry x="1100" y="374" width="260" height="28" as="geometry"/>
+    </mxCell>
+    <mxCell id="scorer_iface" value="«interface»  FitnessScorer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#b85450;fontStyle=2;" vertex="1" parent="1">
+      <mxGeometry x="1100" y="408" width="260" height="30" as="geometry"/>
+    </mxCell>
+    <mxCell id="freq_scorer" value="FrequencyScorer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#b85450;" vertex="1" parent="1">
+      <mxGeometry x="1100" y="442" width="260" height="28" as="geometry"/>
+    </mxCell>
+    <mxCell id="dict_scorer" value="DictionaryScorer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#b85450;" vertex="1" parent="1">
+      <mxGeometry x="1100" y="476" width="260" height="28" as="geometry"/>
+    </mxCell>
+    <mxCell id="comp_scorer" value="CompositeFitnessScorer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#b85450;" vertex="1" parent="1">
+      <mxGeometry x="1100" y="510" width="260" height="28" as="geometry"/>
+    </mxCell>
+    <mxCell id="scorer_catalog" value="ScorerCatalog (registry)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#b85450;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="1100" y="544" width="260" height="30" as="geometry"/>
+    </mxCell>
+    <mxCell id="lang_detector" value="LanguageDetector" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#b85450;" vertex="1" parent="1">
+      <mxGeometry x="1100" y="580" width="260" height="28" as="geometry"/>
+    </mxCell>
+    <mxCell id="language" value="Language / Languages" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#b85450;" vertex="1" parent="1">
+      <mxGeometry x="1100" y="614" width="260" height="28" as="geometry"/>
+    </mxCell>
+    <mxCell id="crack_result" value="CrackResult" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#b85450;" vertex="1" parent="1">
+      <mxGeometry x="1100" y="648" width="260" height="28" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="reader_iface" value="«interface»&#10;TextReader" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontStyle=2;" vertex="1" parent="1">
+      <mxGeometry x="780" y="700" width="140" height="40" as="geometry"/>
+    </mxCell>
+    <mxCell id="readers" value="TextReaders&#10;(registry)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="930" y="700" width="130" height="40" as="geometry"/>
+    </mxCell>
+    <mxCell id="r_plain" value="PlainTextReader" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1">
+      <mxGeometry x="780" y="748" width="140" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="r_md" value="MarkdownReader" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1">
+      <mxGeometry x="930" y="748" width="130" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="r_gz" value="GzipTextReader" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1">
+      <mxGeometry x="780" y="780" width="140" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="r_pdf" value="PdfReader" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1">
+      <mxGeometry x="930" y="780" width="130" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="writer_iface" value="«interface»  TextWriter" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontStyle=2;" vertex="1" parent="1">
+      <mxGeometry x="780" y="822" width="140" height="34" as="geometry"/>
+    </mxCell>
+    <mxCell id="file_writer" value="FileTextWriter" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1">
+      <mxGeometry x="930" y="822" width="130" height="34" as="geometry"/>
+    </mxCell>
+    <mxCell id="naming" value="OutputNaming" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1">
+      <mxGeometry x="780" y="864" width="280" height="34" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="alphabet" value="Alphabet" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;" vertex="1" parent="1">
+      <mxGeometry x="180" y="660" width="130" height="40" as="geometry"/>
+    </mxCell>
+    <mxCell id="ring" value="CharacterRing" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;" vertex="1" parent="1">
+      <mxGeometry x="330" y="660" width="130" height="40" as="geometry"/>
+    </mxCell>
+    <mxCell id="alphabets" value="Alphabets (registry)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="180" y="712" width="280" height="34" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="named_registry" value="NamedRegistry&lt;T&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;" vertex="1" parent="1">
+      <mxGeometry x="540" y="660" width="180" height="34" as="geometry"/>
+    </mxCell>
+    <mxCell id="scored" value="Scored&lt;T&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;" vertex="1" parent="1">
+      <mxGeometry x="540" y="700" width="180" height="34" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="ex_base" value="CryptanalysisException" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="180" y="860" width="260" height="34" as="geometry"/>
+    </mxCell>
+    <mxCell id="ex_invalid" value="InvalidArgumentsException" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="1">
+      <mxGeometry x="180" y="900" width="260" height="30" as="geometry"/>
+    </mxCell>
+    <mxCell id="ex_unreadable" value="UnreadableSourceException" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="1">
+      <mxGeometry x="180" y="936" width="260" height="30" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="e_main_comp" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;strokeColor=#6c8ebf;" edge="1" parent="1" source="main" target="composition">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_comp_cli" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;strokeColor=#6c8ebf;" edge="1" parent="1" source="composition" target="cli">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_comp_service" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;strokeColor=#6c8ebf;" edge="1" parent="1" source="composition" target="service">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_cli_service" value="injects" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;fontSize=10;" edge="1" parent="1" source="cli" target="service">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="e_service_cmd" value="builds" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;fontSize=10;" edge="1" parent="1" source="service" target="cmd_abstract">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_service_reqop" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;strokeColor=#82b366;" edge="1" parent="1" source="service" target="request">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_service_cipher" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;strokeColor=#d79b00;" edge="1" parent="1" source="service" target="cipher_catalog">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_service_scorer" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;strokeColor=#b85450;" edge="1" parent="1" source="service" target="scorer_catalog">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_service_detector" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;strokeColor=#b85450;" edge="1" parent="1" source="service" target="lang_detector">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_service_readers" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;strokeColor=#6c8ebf;" edge="1" parent="1" source="service" target="readers">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_service_writer" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;strokeColor=#6c8ebf;" edge="1" parent="1" source="service" target="file_writer">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_service_naming" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;strokeColor=#6c8ebf;" edge="1" parent="1" source="service" target="naming">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="e_enc_cmd" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=0;" edge="1" parent="1" source="cmd_encrypt" target="cmd_abstract">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_dec_cmd" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=0;" edge="1" parent="1" source="cmd_decrypt" target="cmd_abstract">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_brute_cmd" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=0;" edge="1" parent="1" source="cmd_brute" target="cmd_abstract">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="e_cmd_cipher" value="uses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;strokeColor=#d79b00;fontSize=10;" edge="1" parent="1" source="cmd_abstract" target="cipher_iface">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_brute_cracker" value="uses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;strokeColor=#b85450;fontSize=10;" edge="1" parent="1" source="cmd_brute" target="caesar_cracker">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="e_caesar" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=0;" edge="1" parent="1" source="caesar" target="cipher_iface">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_rot13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=0;" edge="1" parent="1" source="rot13" target="cipher_iface">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_atbash" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=0;" edge="1" parent="1" source="atbash" target="cipher_iface">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_vigenere" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=0;" edge="1" parent="1" source="vigenere" target="cipher_iface">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_catalog_caesar" value="creates" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;fontSize=10;" edge="1" parent="1" source="cipher_catalog" target="caesar">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_cipher_alphabet" value="uses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;strokeColor=#d6b656;fontSize=10;" edge="1" parent="1" source="cipher_iface" target="alphabet">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="e_cc_cracker" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=0;" edge="1" parent="1" source="caesar_cracker" target="cracker_iface">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_cc_scorer" value="uses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;fontSize=10;" edge="1" parent="1" source="caesar_cracker" target="scorer_iface">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_freq" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=0;" edge="1" parent="1" source="freq_scorer" target="scorer_iface">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_dict" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=0;" edge="1" parent="1" source="dict_scorer" target="scorer_iface">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_comp_scorer" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=0;" edge="1" parent="1" source="comp_scorer" target="scorer_iface">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_cracker_result" value="returns" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;fontSize=10;" edge="1" parent="1" source="cracker_iface" target="crack_result">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="e_plain" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=0;" edge="1" parent="1" source="r_plain" target="reader_iface">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_md" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=0;" edge="1" parent="1" source="r_md" target="reader_iface">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_gz" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=0;" edge="1" parent="1" source="r_gz" target="reader_iface">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_pdf" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=0;" edge="1" parent="1" source="r_pdf" target="reader_iface">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_readers_iface" value="registry of" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;fontSize=10;" edge="1" parent="1" source="readers" target="reader_iface">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_filewriter" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=0;" edge="1" parent="1" source="file_writer" target="writer_iface">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="e_alphabet_ring" value="2 rings" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;fontSize=10;" edge="1" parent="1" source="alphabet" target="ring">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_alphabets_alphabet" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;fontSize=10;" edge="1" parent="1" source="alphabets" target="alphabet">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_lang_alphabet" value="shares rings" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;strokeColor=#d6b656;fontSize=10;" edge="1" parent="1" source="language" target="alphabet">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="e_cipher_catalog_reg" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=0;strokeColor=#999999;" edge="1" parent="1" source="cipher_catalog" target="named_registry">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_scorer_catalog_reg" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=0;strokeColor=#999999;" edge="1" parent="1" source="scorer_catalog" target="named_registry">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_cracker_scored" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;strokeColor=#999999;fontSize=10;" edge="1" parent="1" source="caesar_cracker" target="scored">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="e_ex_invalid" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=0;strokeColor=#666666;" edge="1" parent="1" source="ex_invalid" target="ex_base">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_ex_unreadable" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=0;strokeColor=#666666;" edge="1" parent="1" source="ex_unreadable" target="ex_base">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="legend" value="Legend:&#10;— solid hollow triangle = implements / extends&#10;— dashed open arrow = uses / depends on / creates&#10;Registries (bold) wrap support.NamedRegistry" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#ffffff;strokeColor=#999999;fontSize=11;spacingLeft=8;spacingTop=6;" vertex="1" parent="1">
+      <mxGeometry x="1080" y="780" width="320" height="120" as="geometry"/>
+    </mxCell>
+
+  </root>
+</mxGraphModel>

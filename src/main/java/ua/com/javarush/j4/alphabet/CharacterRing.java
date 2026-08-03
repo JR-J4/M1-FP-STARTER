@@ -1,6 +1,10 @@
 package ua.com.javarush.j4.alphabet;
 
 /** An ordered, cyclic sequence of characters of a single case (a Caesar "ring"). */
+// ── SOLID ▸ S — Принцип єдиного обов'язку (SRP) ──
+// Клас відповідає ВИКЛЮЧНО за арифметику кільця символів: зсув, дзеркало, індекс.
+// Він нічого не знає про файли, ключі, мови чи шифри — тому має лише одну причину
+// для зміни (зміну правил обходу кільця). Це і є Single Responsibility.
 public final class CharacterRing {
     private final String chars;
 

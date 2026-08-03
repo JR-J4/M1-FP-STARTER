@@ -5,6 +5,9 @@ package ua.com.javarush.j4.crack;
  * membership, with a strong bonus for letters distinctive to one language
  * (e.g. і/ї/є/ґ for Ukrainian, ё/ъ/ы/э for Russian).
  */
+// ── SOLID ▸ S — Принцип єдиного обов'язку (SRP) ──
+// Детектор відповідає лише за одне: вибрати найімовірніший мовний профіль тексту.
+// Він не зламує шифр і не рахує «читабельність» — це робота Cracker та FitnessScorer.
 public final class LanguageDetector {
     private static final int DISTINCTIVE_WEIGHT = 1000;
 

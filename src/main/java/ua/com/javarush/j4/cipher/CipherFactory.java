@@ -9,6 +9,11 @@ import java.util.Locale;
 public final class CipherFactory {
 
     public Cipher create(String name, Alphabet alphabet, Integer key, String keyword) {
+        // SOLID ▸ O (OCP): фабрика свідомо ІЗОЛЮЄ єдине місце, яке треба доповнити
+        // при появі нового шифру (додати один case). Решта коду — CaesarCracker,
+        // команди, CryptoService — лишається незмінною. Це компроміс: реєстрація
+        // тут не є 100% «закритою», зате прив'язку «ім'я → клас» зібрано в одному
+        // передбачуваному місці, а не розмазано по всьому застосунку.
         return switch (name.toLowerCase(Locale.ROOT)) {
             case "caesar" -> new CaesarCipher(alphabet, requireKey(key));
             case "rot13" -> new Rot13Cipher(alphabet);

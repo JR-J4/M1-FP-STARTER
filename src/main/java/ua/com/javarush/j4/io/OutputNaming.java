@@ -3,6 +3,10 @@ package ua.com.javarush.j4.io;
 import java.nio.file.Path;
 
 /** Computes the output path: inserts/replaces the [ENCRYPTED]/[DECRYPTED] marker. */
+// ── SOLID ▸ S — Принцип єдиного обов'язку (SRP) ──
+// Єдиний обов'язок класу — обчислити ім'я вихідного файлу (вставити чи замінити
+// маркер [ENCRYPTED]/[DECRYPTED]). Читання, запис і шифрування живуть в інших
+// класах, тож логіка іменування змінюється незалежно від решти застосунку.
 public final class OutputNaming {
     private static final String ENCRYPTED = "[ENCRYPTED]";
     private static final String DECRYPTED = "[DECRYPTED]";

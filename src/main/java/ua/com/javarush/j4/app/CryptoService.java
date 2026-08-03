@@ -20,6 +20,12 @@ import java.nio.file.Path;
 import java.util.Locale;
 
 /** Facade: turns a CryptoRequest into the right command and runs it. */
+// ── SOLID ▸ D — Принцип інверсії залежностей (DIP): «корінь композиції» ──
+// Саме тут абстракції «зшиваються» з конкретними реалізаціями: сервіс створює
+// CipherFactory, TextReaders, TextWriter, LanguageDetector і ВПРОВАДЖУЄ їх у
+// команди через конструктори. Завдяки цьому команди й Cracker залишаються
+// залежними лише від інтерфейсів, а всі рішення «що з чим з'єднати» зібрані в
+// одному місці. Клас також є Фасадом (SRP: єдиний обов'язок — оркеструвати запит).
 public final class CryptoService {
     private final TextReaders readers = new TextReaders();
     private final TextWriter writer = new TextWriter();

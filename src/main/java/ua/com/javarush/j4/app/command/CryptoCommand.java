@@ -1,14 +1,18 @@
 package ua.com.javarush.j4.app.command;
 
 import ua.com.javarush.j4.error.UnreadableSourceException;
-import ua.com.javarush.j4.io.OutputNaming;
-import ua.com.javarush.j4.io.TextReaders;
-import ua.com.javarush.j4.io.TextWriter;
+import ua.com.javarush.j4.io.*;
 
 import java.io.IOException;
 import java.nio.file.Path;
 
 /** Template Method: read → transform → name → write. Subclasses supply the two varying steps. */
+// ── SOLID ▸ L — Принцип підстановки Лісков (LSP) ──
+// EncryptCommand, DecryptCommand і BruteForceCommand повністю взаємозамінні:
+// CryptoService викликає execute() через тип CryptoCommand і НЕ перевіряє, який
+// саме підклас перед ним. Кожен підклас чесно виконує контракт «прочитати →
+// перетворити → записати», лише підставляючи власні transform()/outputPath().
+// Жоден підклас не звужує поведінку й не кидає несподіваних винятків — це LSP.
 public abstract class CryptoCommand {
     private final Path input;
     private final TextReaders readers;
@@ -25,7 +29,9 @@ public abstract class CryptoCommand {
     public final Path execute() throws IOException {
         String text;
         try {
-            text = readers.pick(input).read(input);
+            TextReader pick = readers.pick(input);
+            pick.getMeta();
+            text = pick.read(input);
         } catch (IOException e) {
             throw new UnreadableSourceException("Cannot read input file: " + input, e);
         }
