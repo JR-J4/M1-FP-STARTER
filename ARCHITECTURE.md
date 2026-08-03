@@ -118,6 +118,33 @@ The same field drives two things depending on the operation:
 **Know this** before adding a flag: the CLI surfaces it as `-a/--alphabet`, but
 for brute-force it means "language to score against," not "alphabet to shift."
 
+## 7. Parallelism never changes the answer
+
+`concurrent/`, `crack/ParallelCaesarCracker.java`, `cipher/ParallelCipher.java`.
+
+The domain layer is immutable and stateless after construction (`Alphabet`,
+`CharacterRing`, all four ciphers, both scorers, `LanguageProfile`), so it is
+shared across threads with no locking. Everything concurrent hangs off one seam,
+`TaskExecutor`, injected at `CryptoService` alongside the other dependencies.
+
+**Invariant:** output is byte-identical whatever `--threads` is set to. Three
+things hold it up, and breaking any one of them silently corrupts results:
+
+1. **`TaskExecutor.invokeAll` returns results in submission order**, never
+   completion order. Chunk reassembly and tie-breaking both depend on it.
+2. **Keyspace ranges are contiguous and ascending**, and both the in-range scan
+   and the cross-range fold use a strict `>`. That reproduces the sequential
+   sweep's tie-break — lowest key wins an equal score. A `>=` anywhere flips it.
+3. **Vigenère chunks carry a letter offset.** Its key advances per alphabet
+   member, so a chunk's result depends on how many letters precede it;
+   `PositionDependentCipher` supplies that via a prefix sum over per-chunk counts.
+   Position-independent ciphers skip the phase entirely.
+
+**Fan-out happens at exactly one level** — the outermost stage with enough work.
+Batch runs hand each file's command a `DirectTaskExecutor`, so no nesting occurs
+and the pool cannot be oversubscribed or starved. Each component also self-gates
+on input size via `ParallelPolicy`, so small inputs never touch a thread at all.
+
 ## Known, accepted trade-offs (documented, not bugs)
 
 - **Language detection runs on ciphertext** (`app/command/BruteForceCommand.java`,

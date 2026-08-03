@@ -27,7 +27,8 @@ The starter and its tests use **option-style** arguments, deliberately modelled 
 ```
 -e | -d | -b       command (encrypt / decrypt / brute force)
 -k <int>           key (required for -e and -d; NOT passed for -b)
--f <path>          file path
+-f <path>          file path (repeatable; a quoted glob like '*.txt' is expanded)
+--threads <int>    worker threads (0 = every core, 1 = fully sequential)
 ```
 
 Example: `-e -k 5 -f /path/to/file.txt`. Order must be arbitrary (pinned by `EncryptFileTests#argumentOrderIsArbitrary`) — students write the parser themselves and the validation tests cover every error condition. All command flags are single-character (`-b`, not `-bf`) to satisfy POSIX Guideline 3 and avoid the Guideline 5 grouping ambiguity where `-bf` would parse as `-b -f`.
@@ -42,6 +43,25 @@ Encrypted output goes to `foo [ENCRYPTED].txt`; decrypted output to `foo [DECRYP
 
 The English alphabet is **26 letters with case preserved**, modelled as two independent rings (upper and lower). A shift never crosses case: `A`−1=`Z`, `a`−1=`z` (NOT `A`−1=`z`). Keys normalize mod 26, so 26 ≡ 0 and 27 ≡ 1. This is the conventional Caesar behaviour and is pinned by `EncryptEdgeCases#negativeKeyWrapsWithinCase`. (The optional Ukrainian alphabet is a separate 33-letter ring.)
 
+## Concurrency model — important
+
+Three workloads run in parallel: the brute-force key sweep (`ParallelCaesarCracker`), large-file cipher transforms (`ParallelCipher`), and batch multi-file runs (`BatchProcessor`). All go through the `TaskExecutor` seam injected at `CryptoService`.
+
+Two rules keep this predictable:
+
+1. **Each component self-gates on input size** via `ParallelPolicy`, falling back to its sequential algorithm below threshold (8192 chars to crack, 65536 to chunk, 2 files to batch) or whenever `parallelism() == 1`. The shipped fixtures are all well under these, so `MainTest` always takes the sequential path and `LazyPooledTaskExecutor` never starts a thread.
+2. **Fan-out happens at exactly one level** — the outermost stage with enough work. Batch runs hand each file's command a `DirectTaskExecutor`, so inner cracking stays sequential and the pool is never oversubscribed.
+
+Output is byte-identical whatever `--threads` is set to. The brute-force sweep reproduces the sequential tie-break (lowest key wins an equal score) because keyspace ranges are contiguous and ascending and `TaskExecutor.invokeAll` returns results in submission order. Use `--threads 1` to force fully sequential execution.
+
+`PooledTaskExecutor` uses a fixed daemon-thread pool rather than a `ForkJoinPool`: fan-out is single-level so there is no nested join for work-stealing to help with, and `ForkJoinTask` reconstructs a failed task's exception in the calling thread instead of rethrowing the original.
+
+**Measured** (8 threads, Vigenère transform, warmed JIT, best-of-15, transform only — no JVM startup or I/O): 64 KB → 2.28×, 256 KB → 3.43×, 1 MB → 4.58×, 4 MB → 4.85×, 16 MB → 5.21×. The 64 KB gate already pays 2.28×, which is what justifies it. End-to-end brute force on a 4.7 MB file via the jar: 3.46 s → 1.68 s (2.06×), identical output.
+
+Note that for a *single* file the CLI's wall clock is dominated by JVM startup plus I/O (~400 ms), so a one-shot `-e` run barely moves however fast the transform gets. Parallelism shows up where the CPU work is genuinely large: brute force, multi-MB files, and batch runs.
+
+**Batch exit codes:** `CryptoCli.call()` returns 1 when any file failed, but the *process* exit code stays 0 — `Main.main` discards `run()`'s return value and never calls `System.exit`, because `MainTest` invokes `Main.main(...)` in-process and an exit would kill the surefire JVM. This predates the concurrency work.
+
 ## Architecture
 
 Single-module Maven project, package root `ua.com.javarush.j4`, organised by responsibility:
@@ -53,6 +73,8 @@ Single-module Maven project, package root `ua.com.javarush.j4`, organised by res
 - `alphabet/` — `Alphabet`/`CharacterRing` value objects + `Alphabets` registry (EN/UA/RU + composite default).
 - `crack/` — `Cracker`/`CaesarCracker`, pluggable `FitnessScorer` (dictionary + frequency), `LanguageDetector`/`LanguageProfile`.
 - `io/` — `TextReader` strategies (txt/md/gz) + `TextReaders` registry, `TextWriter`, `OutputNaming`.
+- `concurrent/` — `TaskExecutor` seam (`DirectTaskExecutor`, `PooledTaskExecutor`, `LazyPooledTaskExecutor`) + `ParallelPolicy` thresholds.
+- `app/batch/` — `BatchProcessor` + `BatchReport`/`FileOutcome` for concurrent multi-file runs.
 - `error/` — `CryptanalysisException` hierarchy.
 
 `MainTest` remains the authoritative externally-observable contract; the package layout above is the internal design that satisfies it.
