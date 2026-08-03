@@ -3,6 +3,18 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+### claude ###
+.claude/worktrees
+.workflow/
+.reference/
+
+### maven-shade byproduct ###
+dependency-reduced-pom.xml
+
+### manual-run output ###
+*\[ENCRYPTED\].txt
+*\[DECRYPTED\].txt
+
 ### IntelliJ IDEA ###
 .idea
 .idea/modules.xml
