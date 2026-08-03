@@ -8,6 +8,11 @@ import ua.com.javarush.j4.app.command.DecryptCommand;
 import ua.com.javarush.j4.app.command.EncryptCommand;
 import ua.com.javarush.j4.cipher.Cipher;
 import ua.com.javarush.j4.cipher.CipherFactory;
+import ua.com.javarush.j4.cipher.ParallelCipher;
+import ua.com.javarush.j4.concurrent.DirectTaskExecutor;
+import ua.com.javarush.j4.concurrent.LazyPooledTaskExecutor;
+import ua.com.javarush.j4.concurrent.ParallelPolicy;
+import ua.com.javarush.j4.concurrent.TaskExecutor;
 import ua.com.javarush.j4.crack.LanguageDetector;
 import ua.com.javarush.j4.crack.LanguageProfile;
 import ua.com.javarush.j4.crack.LanguageProfiles;
@@ -26,31 +31,53 @@ import java.util.Locale;
 // команди через конструктори. Завдяки цьому команди й Cracker залишаються
 // залежними лише від інтерфейсів, а всі рішення «що з чим з'єднати» зібрані в
 // одному місці. Клас також є Фасадом (SRP: єдиний обов'язок — оркеструвати запит).
-public final class CryptoService {
+//
+// TaskExecutor впроваджується так само, як і решта залежностей: команди не знають,
+// виконуються вони послідовно чи на пулі потоків.
+public final class CryptoService implements AutoCloseable {
     private final TextReaders readers = new TextReaders();
     private final TextWriter writer = new TextWriter();
     private final OutputNaming naming = new OutputNaming();
     private final CipherFactory ciphers = new CipherFactory();
     private final LanguageDetector detector = new LanguageDetector();
+    private final ParallelPolicy policy;
+    private final TaskExecutor executor;
 
-    public Path execute(CryptoRequest request) throws IOException {
-        return command(request).execute();
+    public CryptoService() {
+        this(ParallelPolicy.of(0));
     }
 
-    private CryptoCommand command(CryptoRequest request) {
+    public CryptoService(ParallelPolicy policy) {
+        this.policy = policy;
+        this.executor = policy.threads() > 1
+                ? new LazyPooledTaskExecutor(policy.threads())
+                : new DirectTaskExecutor();
+    }
+
+    public Path execute(CryptoRequest request) throws IOException {
+        return command(request, executor).execute();
+    }
+
+    @Override
+    public void close() {
+        executor.close();
+    }
+
+    private CryptoCommand command(CryptoRequest request, TaskExecutor taskExecutor) {
         Path file = request.file();
         return switch (request.operation()) {
-            case ENCRYPT -> new EncryptCommand(file, cipher(request), readers, writer, naming);
-            case DECRYPT -> new DecryptCommand(file, cipher(request), readers, writer, naming);
+            case ENCRYPT -> new EncryptCommand(file, cipher(request, taskExecutor), readers, writer, naming);
+            case DECRYPT -> new DecryptCommand(file, cipher(request, taskExecutor), readers, writer, naming);
             case BRUTE_FORCE -> new BruteForceCommand(
                     file, detector, forcedProfile(request.alphabetName()),
-                    request.scorerName(), readers, writer, naming);
+                    request.scorerName(), readers, writer, naming, taskExecutor, policy);
         };
     }
 
-    private Cipher cipher(CryptoRequest request) {
+    private Cipher cipher(CryptoRequest request, TaskExecutor taskExecutor) {
         Alphabet alphabet = Alphabets.byName(request.alphabetName());
-        return ciphers.create(request.cipherName(), alphabet, request.key(), request.keyword());
+        Cipher cipher = ciphers.create(request.cipherName(), alphabet, request.key(), request.keyword());
+        return new ParallelCipher(cipher, taskExecutor, policy);
     }
 
     /** For brute force: a named language forces its profile; "default"/"auto" means auto-detect. */

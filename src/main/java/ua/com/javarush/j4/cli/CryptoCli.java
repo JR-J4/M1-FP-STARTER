@@ -7,6 +7,7 @@ import picocli.CommandLine.Option;
 import ua.com.javarush.j4.app.CryptoRequest;
 import ua.com.javarush.j4.app.CryptoService;
 import ua.com.javarush.j4.app.Operation;
+import ua.com.javarush.j4.concurrent.ParallelPolicy;
 
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
@@ -50,11 +51,16 @@ public final class CryptoCli implements Callable<Integer> {
             description = "Brute-force fitness scorer: dictionary, frequency")
     private String scorer;
 
+    @Option(names = "--threads", defaultValue = "0",
+            description = "Worker threads (0 = every available core, 1 = fully sequential)")
+    private int threads;
+
     @Override
     public Integer call() throws Exception {
         Operation operation = selectedOperation();
-        new CryptoService().execute(
-                new CryptoRequest(operation, file, key, cipher, keyword, alphabet, scorer));
+        try (CryptoService service = new CryptoService(ParallelPolicy.of(threads))) {
+            service.execute(new CryptoRequest(operation, file, key, cipher, keyword, alphabet, scorer));
+        }
         return 0;
     }
 
