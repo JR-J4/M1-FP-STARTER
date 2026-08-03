@@ -5,6 +5,8 @@ import ua.com.javarush.j4.alphabet.Alphabets;
 import ua.com.javarush.j4.app.command.BruteForceCommand;
 import ua.com.javarush.j4.app.command.CryptoCommand;
 import ua.com.javarush.j4.app.command.DecryptCommand;
+import ua.com.javarush.j4.app.batch.BatchProcessor;
+import ua.com.javarush.j4.app.batch.BatchReport;
 import ua.com.javarush.j4.app.command.EncryptCommand;
 import ua.com.javarush.j4.cipher.Cipher;
 import ua.com.javarush.j4.cipher.CipherFactory;
@@ -22,6 +24,7 @@ import ua.com.javarush.j4.io.TextWriter;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Locale;
 
 /** Facade: turns a CryptoRequest into the right command and runs it. */
@@ -56,6 +59,21 @@ public final class CryptoService implements AutoCloseable {
 
     public Path execute(CryptoRequest request) throws IOException {
         return command(request, executor).execute();
+    }
+
+    /**
+     * Runs the same request over several files. Fan-out happens here and nowhere else:
+     * each file's command gets a same-thread executor, so cracking and chunking inside it
+     * stay sequential and the pool is never oversubscribed.
+     */
+    public BatchReport executeAll(CryptoRequest template, List<Path> files) {
+        TaskExecutor batchExecutor = policy.shouldParallelizeBatch(files.size())
+                ? executor
+                : new DirectTaskExecutor();
+        TaskExecutor perFileExecutor = new DirectTaskExecutor();
+
+        return new BatchProcessor(batchExecutor)
+                .process(files, file -> command(template.withFile(file), perFileExecutor));
     }
 
     @Override

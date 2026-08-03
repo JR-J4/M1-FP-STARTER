@@ -11,4 +11,9 @@ public record CryptoRequest(
         String keyword,
         String alphabetName,
         String scorerName) {
+
+    /** The same request pointed at a different file — used to fan a batch out. */
+    public CryptoRequest withFile(Path other) {
+        return new CryptoRequest(operation, other, key, cipherName, keyword, alphabetName, scorerName);
+    }
 }

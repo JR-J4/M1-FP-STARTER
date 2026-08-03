@@ -228,7 +228,15 @@ public final class BatchProcessor {
 
 Each task catches its own failure and records an outcome, so one corrupt gzip never
 aborts the batch. The report prints in **input order** regardless of completion order,
-with a summary line. Exit code is non-zero if any file failed.
+with a summary line.
+
+`CryptoCli.call()` returns 1 when any file failed, and `CryptoCli.run()` passes that
+value back to its caller. **The process exit code stays 0 regardless**, because `Main.main`
+discards `run()`'s return value and never calls `System.exit` — `MainTest` drives
+`Main.main(...)` in-process, so an exit there would kill the surefire JVM mid-suite. This
+predates the concurrency work. Making failures visible to a shell would mean
+`System.exit(new CryptoCli().run(args))` in `Main` plus reworking how `MainTest` invokes
+the entry point, which is a change to the authoritative contract file and out of scope here.
 
 `CryptoService` gains a second entry point rather than changing the existing one:
 

@@ -3,13 +3,17 @@ package ua.com.javarush.j4.cli;
 import picocli.CommandLine;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
+import picocli.CommandLine.Spec;
 import ua.com.javarush.j4.app.CryptoRequest;
 import ua.com.javarush.j4.app.CryptoService;
 import ua.com.javarush.j4.app.Operation;
+import ua.com.javarush.j4.app.batch.BatchReport;
 import ua.com.javarush.j4.concurrent.ParallelPolicy;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 /**
@@ -33,8 +37,12 @@ public final class CryptoCli implements Callable<Integer> {
     @Option(names = "-k", description = "Key (required for -e/-d with the caesar cipher)")
     private Integer key;
 
-    @Option(names = "-f", required = true, description = "Input file path")
-    private Path file;
+    @Option(names = "-f", required = true,
+            description = "Input file path. Repeatable; a quoted glob such as '*.txt' is expanded.")
+    private List<Path> files;
+
+    @Spec
+    private CommandSpec spec;
 
     @Option(names = {"-c", "--cipher"}, defaultValue = "caesar",
             description = "Cipher: caesar, rot13, atbash, vigenere")
@@ -58,10 +66,19 @@ public final class CryptoCli implements Callable<Integer> {
     @Override
     public Integer call() throws Exception {
         Operation operation = selectedOperation();
+        List<Path> resolved = new PathExpander().expand(files);
+        CryptoRequest template = new CryptoRequest(
+                operation, resolved.get(0), key, cipher, keyword, alphabet, scorer);
+
         try (CryptoService service = new CryptoService(ParallelPolicy.of(threads))) {
-            service.execute(new CryptoRequest(operation, file, key, cipher, keyword, alphabet, scorer));
+            if (resolved.size() == 1) {
+                service.execute(template);
+                return 0;
+            }
+            BatchReport report = service.executeAll(template, resolved);
+            report.printTo(spec.commandLine().getOut());
+            return report.anyFailed() ? 1 : 0;
         }
-        return 0;
     }
 
     private Operation selectedOperation() {
