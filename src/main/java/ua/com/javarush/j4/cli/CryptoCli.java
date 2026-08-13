@@ -10,7 +10,6 @@ import ua.com.javarush.j4.app.CryptoRequest;
 import ua.com.javarush.j4.app.CryptoService;
 import ua.com.javarush.j4.app.Operation;
 import ua.com.javarush.j4.app.batch.BatchReport;
-import ua.com.javarush.j4.concurrent.ParallelPolicy;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -70,7 +69,7 @@ public final class CryptoCli implements Callable<Integer> {
         CryptoRequest template = new CryptoRequest(
                 operation, resolved.get(0), key, cipher, keyword, alphabet, scorer);
 
-        try (CryptoService service = new CryptoService(ParallelPolicy.of(threads))) {
+        try (CryptoService service = new CryptoService(threads)) {
             if (resolved.size() == 1) {
                 service.execute(template);
                 return 0;

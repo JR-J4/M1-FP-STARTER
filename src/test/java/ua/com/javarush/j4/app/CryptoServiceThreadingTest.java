@@ -2,7 +2,8 @@ package ua.com.javarush.j4.app;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import ua.com.javarush.j4.concurrent.ParallelPolicy;
+import ua.com.javarush.j4.cipher.ParallelCipher;
+
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -15,7 +16,7 @@ class CryptoServiceThreadingTest {
 
     private static String largeEnglishText() {
         StringBuilder text = new StringBuilder();
-        while (text.length() < ParallelPolicy.MIN_CHARS_FOR_TRANSFORM * 2) {
+        while (text.length() < ParallelCipher.MIN_CHARS_FOR_TRANSFORM) {
             text.append("to be or not to be that is the question whether it is nobler\n");
         }
         return text.toString();
@@ -29,7 +30,7 @@ class CryptoServiceThreadingTest {
 
     private static String encryptWith(Path dir, int threads, String content) throws IOException {
         Path input = write(dir, "in-" + threads + ".txt", content);
-        try (CryptoService service = new CryptoService(ParallelPolicy.of(threads))) {
+        try (CryptoService service = new CryptoService(threads)) {
             Path output = service.execute(new CryptoRequest(
                     Operation.ENCRYPT, input, 5, "caesar", null, "default", "dictionary"));
             return Files.readString(output, StandardCharsets.UTF_8);
@@ -57,7 +58,7 @@ class CryptoServiceThreadingTest {
     }
 
     private static String crackRoundTrip(Path input, int threads) throws IOException {
-        try (CryptoService service = new CryptoService(ParallelPolicy.of(threads))) {
+        try (CryptoService service = new CryptoService(threads)) {
             Path encrypted = service.execute(new CryptoRequest(
                     Operation.ENCRYPT, input, 5, "caesar", null, "en", "dictionary"));
             Path cracked = service.execute(new CryptoRequest(

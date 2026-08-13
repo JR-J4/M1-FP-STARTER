@@ -1,5 +1,10 @@
 # Concurrency Layer Implementation Plan
 
+> ⚠️ **SUPERSEDED and already executed.** This plan built the layer that
+> `2026-08-13-concurrency-simplification-design.md` then simplified. `ParallelPolicy`,
+> `LazyPooledTaskExecutor` and `ParallelCaesarCracker` no longer exist. Historical record —
+> do not execute.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Add parallel brute-force cracking, parallel chunked cipher transforms, and concurrent batch file processing, with byte-identical output to the sequential implementation and no measurable cost on small inputs.

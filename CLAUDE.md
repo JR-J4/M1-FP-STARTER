@@ -20,6 +20,21 @@ The starter ships only an empty `Main` — students design and write every class
 - Show help: `java -jar target/J4-M1-FP-1.0-SNAPSHOT.jar --help`
 - CI: `.github/workflows/run_tests.yaml` runs `mvn package` on every push.
 
+## Benchmark
+
+Every performance claim in this file is reproducible on your own machine:
+
+```
+./mvnw -o test-compile
+java -cp target/classes:target/test-classes ua.com.javarush.j4.bench.ConcurrencyBenchmark
+```
+
+Options: `--quick` (~10 s smoke test), `--threads N`, `--max-size N` (MB, default 16). A full run takes about 70 seconds. Add `-Xmx8g` for 16 MB texts — it says so if your heap is short.
+
+It is a `main`, not a test, and must stay that way: it must never run in CI.
+
+Seven sections. §2 is a correctness gate that runs *before* any timing — if the split path disagrees with the sequential one, the benchmark says so and exits non-zero, because timings for a wrong answer are worthless. §4 forces a split at every size, including below the gate, and prints both the cold and warm pool bars; it is how `MIN_CHARS_FOR_TRANSFORM` is derived. §6 and §7 carry the *previous* implementations — a whole-text key sweep, a linear ring scan — and time both, so the before/after ratios are measured on your hardware rather than quoted from mine. Each isolates exactly one change.
+
 ## CLI convention — important
 
 The starter and its tests use **option-style** arguments, deliberately modelled on the [POSIX Utility Conventions](https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap12.html):
@@ -45,20 +60,44 @@ The English alphabet is **26 letters with case preserved**, modelled as two inde
 
 ## Concurrency model — important
 
-Three workloads run in parallel: the brute-force key sweep (`ParallelCaesarCracker`), large-file cipher transforms (`ParallelCipher`), and batch multi-file runs (`BatchProcessor`). All go through the `TaskExecutor` seam injected at `CryptoService`.
+**Two** workloads run in parallel: cipher transforms of texts over 8 MB (`ParallelCipher`) and batch multi-file runs (`BatchProcessor`). Both go through the `TaskExecutor` seam, created at `CryptoService` from `--threads`.
+
+Brute force is deliberately *not* parallel — see "Why brute force is sequential" below. Do not re-add a parallel cracker without re-reading it.
 
 Two rules keep this predictable:
 
-1. **Each component self-gates on input size** via `ParallelPolicy`, falling back to its sequential algorithm below threshold (8192 chars to crack, 65536 to chunk, 2 files to batch) or whenever `parallelism() == 1`. The shipped fixtures are all well under these, so `MainTest` always takes the sequential path and `LazyPooledTaskExecutor` never starts a thread.
-2. **Fan-out happens at exactly one level** — the outermost stage with enough work. Batch runs hand each file's command a `DirectTaskExecutor`, so inner cracking stays sequential and the pool is never oversubscribed.
+1. **`TaskExecutor` is the only authority on width.** There is no separate policy object; `worthSplitting(workUnits, minUnits)` answers "wide enough, and enough work?" in one place, and each component passes its own measured threshold (`ParallelCipher.MIN_CHARS_FOR_TRANSFORM` = 8 MB, `BatchProcessor.MIN_FILES_FOR_BATCH` = 2). The shipped fixtures are far under these, so `MainTest` always takes the sequential path and `PooledTaskExecutor` — which creates its pool on first use — never starts a thread.
+2. **Fan-out happens at exactly one level.** Batch runs hand each file's command `TaskExecutors.sequential()`, so nothing nests and the pool is never oversubscribed. Because width has one source of truth, handing a component the sequential executor is *sufficient* to make it sequential.
 
-Output is byte-identical whatever `--threads` is set to. The brute-force sweep reproduces the sequential tie-break (lowest key wins an equal score) because keyspace ranges are contiguous and ascending and `TaskExecutor.invokeAll` returns results in submission order. Use `--threads 1` to force fully sequential execution.
+Output is byte-identical whatever `--threads` is set to, because `TaskExecutor.invokeAll` returns results in submission order and Vigenère chunks carry a letter offset. Use `--threads 1` to force fully sequential execution.
 
-`PooledTaskExecutor` uses a fixed daemon-thread pool rather than a `ForkJoinPool`: fan-out is single-level so there is no nested join for work-stealing to help with, and `ForkJoinTask` reconstructs a failed task's exception in the calling thread instead of rethrowing the original.
+`PooledTaskExecutor` wraps a fixed daemon-thread pool rather than a `ForkJoinPool`: fan-out is single-level so there is no nested join for work-stealing to help with, and `ForkJoinTask` reconstructs a failed task's exception in the calling thread instead of rethrowing the original. `invokeAll` delegates to `ExecutorService.invokeAll`, whose submission-order guarantee is exactly what this design needs; it waits for every task and reports the first failure in submission order.
 
-**Measured** (8 threads, Vigenère transform, warmed JIT, best-of-15, transform only — no JVM startup or I/O): 64 KB → 2.28×, 256 KB → 3.43×, 1 MB → 4.58×, 4 MB → 4.85×, 16 MB → 5.21×. The 64 KB gate already pays 2.28×, which is what justifies it. End-to-end brute force on a 4.7 MB file via the jar: 3.46 s → 1.68 s (2.06×), identical output.
+### Why brute force is sequential
 
-Note that for a *single* file the CLI's wall clock is dominated by JVM startup plus I/O (~400 ms), so a one-shot `-e` run barely moves however fast the transform gets. Parallelism shows up where the CPU work is genuinely large: brute force, multi-MB files, and batch runs.
+`Alphabet` indexes every character it spans once at construction, so `shift`/`mirror`/`indexOf` are array reads rather than a linear scan of every ring per character. And `CaesarCracker` scores a 4 KB sample to pick the key, then decrypts the full text once — instead of decrypting and scoring the whole text once per key.
+
+Together those made a 1 MB crack ~190× faster than the old sequential sweep and ~31× faster than the old 12-thread one. What remains is a 26-key sweep over 4 KB, which is sub-millisecond: thread handoff would cost more than the work. Below `CaesarCracker.SAMPLE_CHARS` the sample *is* the whole ciphertext, so short inputs behave exactly as a full sweep would.
+
+### Measured (12 cores, JDK 25)
+
+Transform only, warm JIT, best-of-15, DEFAULT alphabet — no JVM startup or I/O. Sizes under the 8 MB gate are shown with the split **forced**, since that is what the gate is choosing against:
+
+| | sequential | 12 threads | saves | speedup |
+|---|---|---|---|---|
+| 64 KB | 0.16 ms | 0.11 ms | 0.04 ms | 1.5× |
+| 256 KB | 0.62 ms | 0.25 ms | 0.37 ms | 2.5× |
+| 1 MB | 2.54 ms | 1.22 ms | 1.32 ms | 2.1× |
+| 4 MB | 10.27 ms | 2.73 ms | 7.54 ms | 3.8× |
+| 16 MB | 40.96 ms | 9.96 ms | 31.00 ms | 4.1× |
+
+**How the 8 MB gate is derived** — the rule matters more than the number, because the number moves: *a split must save more than the worst observed cost of the pool that performs it*. Two bars exist. A **cold** pool — the first in a process, classes not yet loaded — measured 3.3, 7.9, 8.2 and 12.6 ms across four runs on the same machine. Every pool after it costs ~0.1 ms. The cold bar is the one the CLI pays, being one-shot: start a JVM, split a few times, exit. It is one sample per JVM by construction, so that spread cannot be averaged away — taking the worst is what stops the constant drifting each time someone re-measures. Against ~13 ms, 8 MB is the smallest power of two that clears it.
+
+Used as a library with a warm pool, the bar is 0.1 ms instead and a far lower gate would pay. `ConcurrencyBenchmark` §4 prints both bars and forces a split at every size — run it before moving the constant.
+
+**End-to-end via the jar, 4.7 MB file:** brute force 0.26 s (was 3.46 s sequential / 1.68 s on 8 threads). Encrypt 0.18–0.29 s, and `--threads 1` is no slower than all cores. Batch of six 4.7 MB files: 0.38 s → 0.32 s.
+
+Read that last line honestly: after the algorithmic fixes the CLI's wall clock is dominated by JVM startup and I/O, and threads barely move it. The parallel transform is real and measurable in-process, but for one-shot CLI runs the algorithm was the answer, not the thread count.
 
 **Batch exit codes:** `CryptoCli.call()` returns 1 when any file failed, but the *process* exit code stays 0 — `Main.main` discards `run()`'s return value and never calls `System.exit`, because `MainTest` invokes `Main.main(...)` in-process and an exit would kill the surefire JVM. This predates the concurrency work.
 
@@ -70,10 +109,10 @@ Single-module Maven project, package root `ua.com.javarush.j4`, organised by res
 - `cli/` — `CryptoCli` (picocli `@Command`); parses the legacy `-e/-d/-b`, `-k`, `-f` contract plus additive `--cipher`, `--keyword`, `--alphabet` flags.
 - `app/` — `CryptoService` facade + `command/` (Template-Method `CryptoCommand`: Encrypt/Decrypt/BruteForce).
 - `cipher/` — `Cipher` strategy + Caesar/ROT13/Atbash/Vigenère + `CipherFactory`.
-- `alphabet/` — `Alphabet`/`CharacterRing` value objects + `Alphabets` registry (EN/UA/RU + composite default).
-- `crack/` — `Cracker`/`CaesarCracker`, pluggable `FitnessScorer` (dictionary + frequency), `LanguageDetector`/`LanguageProfile`.
+- `alphabet/` — `Alphabet` (owns the O(1) character index) / `CharacterRing` (owns ring arithmetic, addressed by position) + `Alphabets` registry (EN/UA/RU + composite default).
+- `crack/` — `Cracker`/`CaesarCracker` (samples to choose a key), pluggable `FitnessScorer` (dictionary + frequency), `LanguageDetector`/`LanguageProfile`.
 - `io/` — `TextReader` strategies (txt/md/gz) + `TextReaders` registry, `TextWriter`, `OutputNaming`.
-- `concurrent/` — `TaskExecutor` seam (`DirectTaskExecutor`, `PooledTaskExecutor`, `LazyPooledTaskExecutor`) + `ParallelPolicy` thresholds.
+- `concurrent/` — `TaskExecutor` seam (`DirectTaskExecutor`, `PooledTaskExecutor`) + `TaskExecutors` factory.
 - `app/batch/` — `BatchProcessor` + `BatchReport`/`FileOutcome` for concurrent multi-file runs.
 - `error/` — `CryptanalysisException` hierarchy.
 

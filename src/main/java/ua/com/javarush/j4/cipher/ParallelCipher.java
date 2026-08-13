@@ -1,6 +1,5 @@
 package ua.com.javarush.j4.cipher;
 
-import ua.com.javarush.j4.concurrent.ParallelPolicy;
 import ua.com.javarush.j4.concurrent.TaskExecutor;
 
 import java.util.ArrayList;
@@ -17,17 +16,54 @@ import java.util.concurrent.Callable;
  * else transforms in one phase, since each character is independent.
  */
 public final class ParallelCipher implements Cipher {
+
+    /**
+     * Below this, splitting does not pay for itself.
+     *
+     * <p><b>The rule this number follows:</b> a split must save more than the worst observed
+     * cost of the pool that performs it. The first split in a process is what creates that
+     * pool, and a cold pool is expensive and erratic — measured at 3.3, 7.9, 8.2 and 12.6 ms
+     * across four runs on the same 12-core machine. It is one sample per JVM by construction,
+     * so the spread cannot be averaged away; taking the worst is what keeps the gate stable
+     * instead of drifting every time someone re-measures.
+     *
+     * <p>Against a ~13 ms worst case, a split saves 1.3 ms at 1 MB, 7.5 ms at 4 MB, ~15 ms at
+     * 8 MB and 31 ms at 16 MB. 8 MB is the smallest power of two that clears it.
+     *
+     * <p>The cold bar is the right one for the CLI, which is one-shot: it starts a JVM, splits
+     * at most a few times and exits. End-to-end that shows up as an absence — through the jar,
+     * a 4.7 MB encrypt at {@code --threads 1} is no slower than at every core. Used as a
+     * library with a pool that stays warm the bar is instead ~0.1 ms, which a 256 KB text
+     * already clears, and a far lower gate would pay. Run {@code ConcurrencyBenchmark} §4,
+     * which prints both bars and forces a split at every size, before moving this number.
+     *
+     * <p>It used to be 64 KB, back when the alphabet did a linear ring scan per character.
+     * Making that lookup O(1) sped the sequential path up roughly fourfold, and the point
+     * where threads start earning their keep moved out with it: 64 KB now gains 1.0×.
+     */
+    public static final int MIN_CHARS_FOR_TRANSFORM = 1 << 23;
+
     private static final int MIN_CHUNK_CHARS = 16_384;
     private static final int CHUNKS_PER_THREAD = 4;
 
     private final Cipher delegate;
     private final TaskExecutor executor;
-    private final ParallelPolicy policy;
+    private final int minCharsToSplit;
 
-    public ParallelCipher(Cipher delegate, TaskExecutor executor, ParallelPolicy policy) {
+    public ParallelCipher(Cipher delegate, TaskExecutor executor) {
+        this(delegate, executor, MIN_CHARS_FOR_TRANSFORM);
+    }
+
+    /**
+     * With an explicit threshold, so a caller can ask what splitting a given text
+     * <em>would</em> cost. Used by tests, which would otherwise have to allocate megabytes to
+     * reach the shipped gate, and by the benchmark, which has to measure below it to show why
+     * the gate sits where it does.
+     */
+    public ParallelCipher(Cipher delegate, TaskExecutor executor, int minCharsToSplit) {
         this.delegate = delegate;
         this.executor = executor;
-        this.policy = policy;
+        this.minCharsToSplit = minCharsToSplit;
     }
 
     @Override
@@ -41,7 +77,7 @@ public final class ParallelCipher implements Cipher {
     }
 
     private String process(String text, boolean encrypting) {
-        if (executor.parallelism() <= 1 || !policy.shouldParallelizeTransform(text.length())) {
+        if (!executor.worthSplitting(text.length(), minCharsToSplit)) {
             return encrypting ? delegate.encrypt(text) : delegate.decrypt(text);
         }
 
@@ -50,9 +86,7 @@ public final class ParallelCipher implements Cipher {
                 ? transformPositionDependent(chunks, positional, encrypting)
                 : transformIndependent(chunks, encrypting);
 
-        StringBuilder out = new StringBuilder(text.length());
-        transformed.forEach(out::append);
-        return out.toString();
+        return join(transformed, text.length());
     }
 
     private List<String> transformIndependent(List<String> chunks, boolean encrypting) {
@@ -110,5 +144,16 @@ public final class ParallelCipher implements Cipher {
             start = end;
         }
         return chunks;
+    }
+
+    /** Copies the pieces into one buffer of the known final size — no growing, no second copy. */
+    private static String join(List<String> parts, int totalLength) {
+        char[] out = new char[totalLength];
+        int at = 0;
+        for (String part : parts) {
+            part.getChars(0, part.length(), out, at);
+            at += part.length();
+        }
+        return new String(out);
     }
 }

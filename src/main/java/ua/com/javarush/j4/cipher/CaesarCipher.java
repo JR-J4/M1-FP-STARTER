@@ -22,11 +22,14 @@ public final class CaesarCipher implements Cipher {
         return shiftAll(text, -key);
     }
 
+    // A char[] rather than a StringBuilder: the output is exactly as long as the input, so
+    // there is nothing to grow, and a builder would additionally re-encode the whole buffer
+    // the first time a non-Latin-1 character arrived.
     private String shiftAll(String text, int by) {
-        StringBuilder out = new StringBuilder(text.length());
-        for (int i = 0; i < text.length(); i++) {
-            out.append(alphabet.shift(text.charAt(i), by));
+        char[] out = text.toCharArray();
+        for (int i = 0; i < out.length; i++) {
+            out[i] = alphabet.shift(out[i], by);
         }
-        return out.toString();
+        return new String(out);
     }
 }

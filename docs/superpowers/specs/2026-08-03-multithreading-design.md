@@ -1,7 +1,10 @@
 # Concurrency layer — design
 
 **Date:** 2026-08-03
-**Status:** approved, ready for implementation planning
+**Status:** ⚠️ **SUPERSEDED** by `2026-08-13-concurrency-simplification-design.md`.
+Kept as the record of how this layer was first built. `ParallelPolicy`,
+`LazyPooledTaskExecutor` and `ParallelCaesarCracker` described below no longer exist, and
+the thresholds quoted here were retuned. Do not implement from this document.
 
 ## Context
 

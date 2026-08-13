@@ -12,6 +12,7 @@ import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -125,18 +126,14 @@ class TaskExecutorTest {
                 assertEquals("first", thrown.getCause().getMessage());
             }
         }
-    }
-
-    @Nested
-    @DisplayName("LazyPooledTaskExecutor")
-    class Lazy {
 
         @Test
         void answersParallelismWithoutStartingAPool() {
-            LazyPooledTaskExecutor executor = new LazyPooledTaskExecutor(4);
+            PooledTaskExecutor executor = new PooledTaskExecutor(4);
             try {
                 assertEquals(4, executor.parallelism());
-                assertFalse(executor.poolStarted(), "asking for parallelism must not start threads");
+                assertTrue(executor.worthSplitting(100, 10));
+                assertFalse(executor.poolStarted(), "asking about width must not start threads");
             } finally {
                 executor.close();
             }
@@ -144,7 +141,7 @@ class TaskExecutorTest {
 
         @Test
         void startsThePoolOnFirstUse() {
-            LazyPooledTaskExecutor executor = new LazyPooledTaskExecutor(4);
+            PooledTaskExecutor executor = new PooledTaskExecutor(4);
             try {
                 assertEquals(List.of(0, 1, 2, 3), executor.invokeAll(scrambledTasks(4)));
                 assertTrue(executor.poolStarted());
@@ -154,10 +151,67 @@ class TaskExecutorTest {
         }
 
         @Test
-        void closeIsSafeWhenNeverUsed() {
-            LazyPooledTaskExecutor executor = new LazyPooledTaskExecutor(4);
+        void closeIsSafeWhenNeverUsedAndWhenRepeated() {
+            PooledTaskExecutor executor = new PooledTaskExecutor(4);
             executor.close();
             assertFalse(executor.poolStarted());
+
+            executor.invokeAll(List.<Callable<Integer>>of(() -> 1));
+            assertTrue(executor.poolStarted());
+            executor.close();
+            executor.close();
+            assertFalse(executor.poolStarted());
+        }
+    }
+
+    @Nested
+    @DisplayName("worthSplitting")
+    class WorthSplitting {
+
+        @Test
+        void oneThreadNeverSplits() {
+            try (TaskExecutor sequential = new DirectTaskExecutor()) {
+                assertFalse(sequential.worthSplitting(Integer.MAX_VALUE, 1));
+            }
+        }
+
+        @Test
+        void theThresholdIsInclusive() {
+            try (TaskExecutor executor = new PooledTaskExecutor(4)) {
+                assertFalse(executor.worthSplitting(999, 1_000));
+                assertTrue(executor.worthSplitting(1_000, 1_000));
+                assertTrue(executor.worthSplitting(1_001, 1_000));
+            }
+        }
+    }
+
+    @Nested
+    @DisplayName("TaskExecutors")
+    class Factory {
+
+        @Test
+        void zeroOrLessMeansEveryAvailableCore() {
+            int cores = Runtime.getRuntime().availableProcessors();
+            try (TaskExecutor everyCore = TaskExecutors.of(0); TaskExecutor negative = TaskExecutors.of(-1)) {
+                assertEquals(cores, everyCore.parallelism());
+                assertEquals(cores, negative.parallelism());
+            }
+        }
+
+        @Test
+        void oneThreadYieldsTheSameThreadExecutor() {
+            try (TaskExecutor executor = TaskExecutors.of(1)) {
+                assertInstanceOf(DirectTaskExecutor.class, executor);
+                assertEquals(1, executor.parallelism());
+            }
+        }
+
+        @Test
+        void anExplicitCountIsHonoured() {
+            try (TaskExecutor executor = TaskExecutors.of(3)) {
+                assertInstanceOf(PooledTaskExecutor.class, executor);
+                assertEquals(3, executor.parallelism());
+            }
         }
     }
 }

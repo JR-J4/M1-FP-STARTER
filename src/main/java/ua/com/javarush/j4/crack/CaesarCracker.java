@@ -3,8 +3,28 @@ package ua.com.javarush.j4.crack;
 import ua.com.javarush.j4.alphabet.Alphabet;
 import ua.com.javarush.j4.cipher.CaesarCipher;
 
-/** Sweeps every Caesar shift and returns the decryption the scorer likes best. */
+/**
+ * Sweeps every Caesar shift and returns the decryption the scorer likes best.
+ *
+ * <p>The sweep scores a leading <em>sample</em> rather than the whole ciphertext, then
+ * decrypts the full text once with the winning key. Deciding a 26-key Caesar sweep does not
+ * need a megabyte of evidence: over a few thousand characters of natural language the correct
+ * key scores hundreds of dictionary hits where every wrong key scores almost none. Scoring
+ * the whole text instead means decrypting and scoring it {@code keyspace} times over — which
+ * is where nearly all of a brute-force run used to go.
+ *
+ * <p>At or below {@link #SAMPLE_CHARS} the whole ciphertext <em>is</em> the sample, so short
+ * inputs behave exactly as a full sweep would.
+ */
 public final class CaesarCracker implements Cracker {
+
+    /**
+     * Evidence enough to identify a Caesar key; scoring beyond this only costs time.
+     * Public because it is a behavioural boundary, not just a tuning knob: at or below this
+     * length the sample is the whole ciphertext, so the result matches a full sweep exactly.
+     */
+    public static final int SAMPLE_CHARS = 4_096;
+
     private final Alphabet alphabet;
     // ── SOLID ▸ D — Принцип інверсії залежностей (DIP) ──
     // Високорівнева логіка (перебір ключів) залежить від АБСТРАКЦІЇ FitnessScorer,
@@ -21,20 +41,20 @@ public final class CaesarCracker implements Cracker {
 
     @Override
     public CrackResult crack(String ciphertext) {
-        int keyspace = alphabet.keyspaceSize();
-        int bestKey = 0;
-        String bestText = ciphertext;
-        double bestScore = Double.NEGATIVE_INFINITY;
+        String sample = ciphertext.length() <= SAMPLE_CHARS
+                ? ciphertext
+                : ciphertext.substring(0, SAMPLE_CHARS);
 
-        for (int key = 0; key < keyspace; key++) {
-            String candidate = new CaesarCipher(alphabet, key).decrypt(ciphertext);
-            double score = scorer.score(candidate);
+        int bestKey = 0;
+        double bestScore = Double.NEGATIVE_INFINITY;
+        for (int key = 0; key < alphabet.keyspaceSize(); key++) {
+            // Strict '>' so the lowest key wins a tie, as an ascending scan should.
+            double score = scorer.score(new CaesarCipher(alphabet, key).decrypt(sample));
             if (score > bestScore) {
                 bestScore = score;
                 bestKey = key;
-                bestText = candidate;
             }
         }
-        return new CrackResult(bestKey, bestText);
+        return new CrackResult(bestKey, new CaesarCipher(alphabet, bestKey).decrypt(ciphertext));
     }
 }

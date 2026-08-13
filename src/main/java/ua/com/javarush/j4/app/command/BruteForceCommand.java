@@ -1,14 +1,12 @@
 package ua.com.javarush.j4.app.command;
 
-import ua.com.javarush.j4.concurrent.ParallelPolicy;
-import ua.com.javarush.j4.concurrent.TaskExecutor;
+import ua.com.javarush.j4.crack.CaesarCracker;
 import ua.com.javarush.j4.crack.Cracker;
 import ua.com.javarush.j4.crack.DictionaryScorer;
 import ua.com.javarush.j4.crack.FitnessScorer;
 import ua.com.javarush.j4.crack.FrequencyScorer;
 import ua.com.javarush.j4.crack.LanguageDetector;
 import ua.com.javarush.j4.crack.LanguageProfile;
-import ua.com.javarush.j4.crack.ParallelCaesarCracker;
 import ua.com.javarush.j4.error.InvalidArgumentsException;
 import ua.com.javarush.j4.io.OutputNaming;
 import ua.com.javarush.j4.io.TextReaders;
@@ -21,18 +19,14 @@ public final class BruteForceCommand extends CryptoCommand {
     private final LanguageDetector detector;
     private final LanguageProfile forcedProfile; // null => auto-detect
     private final String scorerName;
-    private final TaskExecutor executor;
-    private final ParallelPolicy policy;
 
     public BruteForceCommand(Path input, LanguageDetector detector, LanguageProfile forcedProfile,
                              String scorerName, TextReaders readers, TextWriter writer,
-                             OutputNaming naming, TaskExecutor executor, ParallelPolicy policy) {
+                             OutputNaming naming) {
         super(input, readers, writer, naming);
         this.detector = detector;
         this.forcedProfile = forcedProfile;
         this.scorerName = scorerName;
-        this.executor = executor;
-        this.policy = policy;
     }
 
     @Override
@@ -48,7 +42,7 @@ public final class BruteForceCommand extends CryptoCommand {
          */
         LanguageProfile profile = forcedProfile != null ? forcedProfile : detector.detect(text);
         FitnessScorer scorer = buildScorer(scorerName, profile);
-        Cracker cracker = new ParallelCaesarCracker(profile.alphabet(), scorer, executor, policy);
+        Cracker cracker = new CaesarCracker(profile.alphabet(), scorer);
         return cracker.crack(text).plaintext();
     }
 

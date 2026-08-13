@@ -120,30 +120,61 @@ for brute-force it means "language to score against," not "alphabet to shift."
 
 ## 7. Parallelism never changes the answer
 
-`concurrent/`, `crack/ParallelCaesarCracker.java`, `cipher/ParallelCipher.java`.
+`concurrent/`, `cipher/ParallelCipher.java`, `app/batch/BatchProcessor.java`.
 
 The domain layer is immutable and stateless after construction (`Alphabet`,
 `CharacterRing`, all four ciphers, both scorers, `LanguageProfile`), so it is
 shared across threads with no locking. Everything concurrent hangs off one seam,
-`TaskExecutor`, injected at `CryptoService` alongside the other dependencies.
+`TaskExecutor`, created at `CryptoService` from the requested thread count.
 
-**Invariant:** output is byte-identical whatever `--threads` is set to. Three
-things hold it up, and breaking any one of them silently corrupts results:
+**Invariant:** output is byte-identical whatever `--threads` is set to. Two
+things hold it up, and breaking either one silently corrupts results:
 
 1. **`TaskExecutor.invokeAll` returns results in submission order**, never
-   completion order. Chunk reassembly and tie-breaking both depend on it.
-2. **Keyspace ranges are contiguous and ascending**, and both the in-range scan
-   and the cross-range fold use a strict `>`. That reproduces the sequential
-   sweep's tie-break — lowest key wins an equal score. A `>=` anywhere flips it.
-3. **Vigenère chunks carry a letter offset.** Its key advances per alphabet
+   completion order. Chunk reassembly depends on it.
+2. **Vigenère chunks carry a letter offset.** Its key advances per alphabet
    member, so a chunk's result depends on how many letters precede it;
    `PositionDependentCipher` supplies that via a prefix sum over per-chunk counts.
    Position-independent ciphers skip the phase entirely.
 
-**Fan-out happens at exactly one level** — the outermost stage with enough work.
-Batch runs hand each file's command a `DirectTaskExecutor`, so no nesting occurs
-and the pool cannot be oversubscribed or starved. Each component also self-gates
-on input size via `ParallelPolicy`, so small inputs never touch a thread at all.
+**`TaskExecutor` is the only authority on width.** There is no separate policy
+object: `worthSplitting(workUnits, minUnits)` answers "wide enough, and enough
+work?" in one place, and each component passes its own measured threshold.
+A component handed a `DirectTaskExecutor` is therefore sequential, full stop —
+which is how **fan-out stays at exactly one level**: batch runs hand each file's
+command `TaskExecutors.sequential()`, so nothing nests and the pool cannot be
+oversubscribed. The pool itself is created on first use, so a run that never
+clears a threshold never starts a thread.
+
+**Two workloads are parallel, and only two:** chunked transforms of files over
+8 MB, and multi-file batches. Brute force is not, deliberately — see §8.
+
+The 8 MB gate follows a rule, not a guess: *a split must save more than the
+worst observed cost of the pool that performs it*. The first pool in a process
+costs 3–13 ms (measured four times on one machine — it is one sample per JVM, so
+the spread cannot be averaged away); every pool after it costs ~0.1 ms. Taking
+the worst is what keeps the constant from drifting each time someone
+re-measures. Run `ConcurrencyBenchmark` §4 before moving it: it prints both bars
+and forces a split at every size, so you can see what the gate is buying.
+
+## 8. Brute force is fast because it stopped doing the work
+
+`crack/CaesarCracker.java`, `alphabet/Alphabet.java`.
+
+Two changes made the key sweep roughly 60× faster on a 1 MB file, single-threaded,
+than the 12-thread version that preceded them:
+
+- **`Alphabet` indexes its characters once.** Finding a character's ring used to
+  be a linear scan of every ring, per character, and that was the hottest loop in
+  the codebase. The constructor now records ring and position for every character
+  the rings span, so `shift`/`mirror`/`indexOf` are array reads.
+- **The sweep scores a 4 KB sample**, then decrypts the full text once with the
+  winning key — instead of decrypting and scoring the whole text once per key.
+
+**Know this** before "restoring" a parallel cracker: there is nothing left to
+parallelise. A 26-key sweep over 4 KB is sub-millisecond, and thread handoff
+would cost more than the sweep. Below `SAMPLE_CHARS` the sample *is* the whole
+ciphertext, so short inputs behave exactly as a full sweep would.
 
 ## Known, accepted trade-offs (documented, not bugs)
 

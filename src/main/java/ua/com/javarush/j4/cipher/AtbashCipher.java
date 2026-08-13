@@ -21,10 +21,10 @@ public final class AtbashCipher implements Cipher {
     }
 
     private String mirror(String text) {
-        StringBuilder out = new StringBuilder(text.length());
-        for (int i = 0; i < text.length(); i++) {
-            out.append(alphabet.mirror(text.charAt(i)));
+        char[] out = text.toCharArray();
+        for (int i = 0; i < out.length; i++) {
+            out[i] = alphabet.mirror(out[i]);
         }
-        return out.toString();
+        return new String(out);
     }
 }

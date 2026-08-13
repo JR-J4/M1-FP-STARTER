@@ -3,9 +3,95 @@ package ua.com.javarush.j4.alphabet;
 import org.junit.jupiter.api.Test;
 import ua.com.javarush.j4.error.InvalidArgumentsException;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class AlphabetTest {
+
+    private static final List<String> EN_RINGS = List.of(
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+            "abcdefghijklmnopqrstuvwxyz");
+    private static final List<String> UA_RINGS = List.of(
+            "АБВГҐДЕЄЖЗИІЇЙКЛМНОПРСТУФХЦЧШЩЬЮЯ",
+            "абвгґдеєжзиіїйклмнопрстуфхцчшщьюя");
+    private static final List<String> MIXED_RINGS = List.of(
+            EN_RINGS.get(0), EN_RINGS.get(1), UA_RINGS.get(0), UA_RINGS.get(1));
+
+    /**
+     * Reference implementation: the linear ring scan {@link Alphabet} used before it grew a
+     * lookup table. Every fast-path answer must still match this, character for character.
+     */
+    private static String naiveRingOf(List<String> rings, char c) {
+        for (String ring : rings) {
+            if (ring.indexOf(c) >= 0) {
+                return ring;
+            }
+        }
+        return null;
+    }
+
+    private static char naiveShift(List<String> rings, char c, int k) {
+        String ring = naiveRingOf(rings, c);
+        if (ring == null) {
+            return c;
+        }
+        int n = ring.length();
+        return ring.charAt(((ring.indexOf(c) + k) % n + n) % n);
+    }
+
+    private static char naiveMirror(List<String> rings, char c) {
+        String ring = naiveRingOf(rings, c);
+        return ring == null ? c : ring.charAt(ring.length() - 1 - ring.indexOf(c));
+    }
+
+    private static Alphabet build(String name, List<String> rings) {
+        return new Alphabet(name, rings.stream().map(CharacterRing::new).toList());
+    }
+
+    /**
+     * The property that licenses the lookup table: over the whole {@code char} range and a
+     * spread of keys — negative, zero, one full cycle, and beyond — the alphabet agrees with
+     * a naive scan of its own rings.
+     */
+    @Test
+    void agreesWithANaiveRingScanForEveryCharacter() {
+        record Case(String name, List<String> rings) {
+        }
+        List<Case> cases = List.of(
+                new Case("en", EN_RINGS),
+                new Case("ua", UA_RINGS),
+                new Case("mixed", MIXED_RINGS));
+        int[] keys = {-33, -26, -1, 0, 1, 7, 26, 33, 100};
+
+        for (Case testCase : cases) {
+            Alphabet alphabet = build(testCase.name(), testCase.rings());
+            for (int codeUnit = 0; codeUnit <= Character.MAX_VALUE; codeUnit++) {
+                char c = (char) codeUnit;
+                String where = testCase.name() + " U+" + Integer.toHexString(codeUnit);
+
+                assertEquals(naiveRingOf(testCase.rings(), c) != null, alphabet.contains(c),
+                        "contains " + where);
+                assertEquals(naiveMirror(testCase.rings(), c), alphabet.mirror(c), "mirror " + where);
+
+                String ring = naiveRingOf(testCase.rings(), c);
+                assertEquals(ring == null ? -1 : ring.indexOf(c), alphabet.position(c).orElse(-1),
+                        "position " + where);
+
+                for (int key : keys) {
+                    assertEquals(naiveShift(testCase.rings(), c, key), alphabet.shift(c, key),
+                            "shift " + where + " by " + key);
+                }
+            }
+        }
+    }
+
+    @Test
+    void keyspaceIsTheLargestRing() {
+        assertEquals(26, build("en", EN_RINGS).keyspaceSize());
+        assertEquals(33, build("ua", UA_RINGS).keyspaceSize());
+        assertEquals(33, build("mixed", MIXED_RINGS).keyspaceSize());
+    }
 
     @Test
     void shiftsWithinCaseAndWrapsByModulo() {

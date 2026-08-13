@@ -40,27 +40,27 @@ public final class VigenereCipher implements Cipher, PositionDependentCipher {
     public int alphabetLetterCount(String chunk) {
         int count = 0;
         for (int i = 0; i < chunk.length(); i++) {
-            if (alphabet.position(chunk.charAt(i)).isPresent()) {
+            if (alphabet.contains(chunk.charAt(i))) {
                 count++;
             }
         }
         return count;
     }
 
+    // indexOf rather than position(): this runs twice per character, and OptionalInt would
+    // put an allocation on the hottest path in the cipher.
     private String process(String text, int sign, int startLetterIndex) {
-        StringBuilder out = new StringBuilder(text.length());
+        char[] out = text.toCharArray();
         int keyIndex = startLetterIndex;
-        for (int i = 0; i < text.length(); i++) {
-            char c = text.charAt(i);
-            if (alphabet.position(c).isPresent()) {
+        for (int i = 0; i < out.length; i++) {
+            char c = out[i];
+            if (alphabet.contains(c)) {
                 char keyChar = keyword.charAt(keyIndex % keyword.length());
-                int shift = alphabet.position(keyChar).orElse(0) * sign;
-                out.append(alphabet.shift(c, shift));
+                int shift = Math.max(alphabet.indexOf(keyChar), 0) * sign;
+                out[i] = alphabet.shift(c, shift);
                 keyIndex++;
-            } else {
-                out.append(c);
             }
         }
-        return out.toString();
+        return new String(out);
     }
 }
